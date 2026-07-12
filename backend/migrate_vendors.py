@@ -4,9 +4,9 @@ import openpyxl
 DB_PATH = "vendor_contracts.db"
 EXCEL_PATH = "IT_Service_Contract_Details_Fy25-26.xlsx"
 SHEET_NAME = "Fy25-26"
-HEADER_ROW = 3          # row 3 has the column titles ("Sl", "Type", "Vendor", ...)
-DATA_START_ROW = 4      # actual contract rows start on row 4
-VENDOR_COLUMN = 4       # column D = "Vendor"
+HEADER_ROW = 3          
+DATA_START_ROW = 4      
+VENDOR_COLUMN = 4      
 
 
 def read_vendor_names():
@@ -35,7 +35,7 @@ def read_vendor_names():
             print("  -", repr(m))
         print()
 
-    cleaned = [" ".join(n.split()) for n in raw_names]  # collapses \n and extra spaces
+    cleaned = [" ".join(n.split()) for n in raw_names] 
     unique_names = sorted(set(cleaned))
     return unique_names
 
