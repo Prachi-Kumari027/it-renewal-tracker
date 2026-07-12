@@ -1,6 +1,5 @@
 // ============================================================
-// CONFIG — change this if Prachi's server runs on a different
-// address/port. Flask's default is usually http://localhost:5000
+// CONFIG — matches Prachi's Flask server (confirmed running on port 5000)
 // ============================================================
 const API_BASE = 'http://localhost:5000/api';
 
@@ -10,11 +9,10 @@ const cancelBtn    = document.getElementById('cancelFormBtn');
 const saveBtn      = document.getElementById('saveVendorBtn');
 const overlay      = document.getElementById('addVendorModal');
 const vendorNameEl = document.getElementById('vendorName');
-const vendorTypeEl = document.getElementById('vendorType');
 const formMessage  = document.getElementById('formMessage');
 const contractsList = document.getElementById('contractsList');
 
-// ---------- Modal open/close (same as Day 2) ----------
+// ---------- Modal open/close ----------
 openBtn.addEventListener('click', function () {
   overlay.classList.add('open');
 });
@@ -28,34 +26,18 @@ overlay.addEventListener('click', function (event) {
 });
 
 // ============================================================
-// PART 1 — Figure out the color for a contract based on due date
+// NOTE: Prachi's backend only has /api/vendors right now — there's no
+// /api/contracts endpoint yet, and vendors don't have a due_date field.
+// So for now we just show vendor name + status, with NO color dot yet.
 // ============================================================
-function daysRemaining(dueDateStr) {
-  const due = new Date(dueDateStr);
-  const today = new Date();
-  const oneDay = 1000 * 60 * 60 * 24;
-  return Math.ceil((due - today) / oneDay);
-}
 
-function colorForDays(days) {
-  if (days <= 10) return 'red';
-  if (days <= 20) return 'yellow';
-  if (days <= 30) return 'green';
-  return '';
-}
-
-// ============================================================
-// PART 2 — Build the HTML for one contract row
-// ============================================================
-function contractRowHTML(contract) {
-  const color = colorForDays(daysRemaining(contract.due_date));
+function vendorRowHTML(vendor) {
   return `
     <div class="contract-row">
       <div class="row-left">
-        <span class="dot ${color}"></span>
         <div>
-          <div class="vendor-name">${contract.vendor_name}</div>
-          <div class="contract-meta">${contract.type} &middot; Due ${contract.due_date}</div>
+          <div class="vendor-name">${vendor.name}</div>
+          <div class="contract-meta">Status: ${vendor.status}</div>
         </div>
       </div>
       <div class="row-actions">
@@ -67,31 +49,31 @@ function contractRowHTML(contract) {
 }
 
 // ============================================================
-// PART 3 — Load the real contract list from the API (GET request)
+// Load the real vendor list from the API (GET request)
 // ============================================================
-async function loadContracts() {
+async function loadVendors() {
   try {
-    const response = await fetch(`${API_BASE}/contracts`);
-    const contracts = await response.json();
+    const response = await fetch(`${API_BASE}/vendors`);
+    const vendors = await response.json();
 
-    if (contracts.length === 0) {
-      contractsList.innerHTML = `<p style="font-size:13px; color:#6b7684;">No contracts yet.</p>`;
+    if (vendors.length === 0) {
+      contractsList.innerHTML = `<p style="font-size:13px; color:#6b7684;">No vendors yet.</p>`;
       return;
     }
 
-    contractsList.innerHTML = contracts.map(contractRowHTML).join('');
+    contractsList.innerHTML = vendors.map(vendorRowHTML).join('');
   } catch (error) {
-    contractsList.innerHTML = `<p style="font-size:13px; color:#a33d33;">Could not load contracts. Is the backend running?</p>`;
-    console.error('Error loading contracts:', error);
+    contractsList.innerHTML = `<p style="font-size:13px; color:#a33d33;">Could not load vendors. Is the backend running?</p>`;
+    console.error('Error loading vendors:', error);
   }
 }
 
 // ============================================================
-// PART 4 — Save a new vendor (POST request)
+// Save a new vendor (POST request) — only sends "name", since that's
+// all Prachi's backend currently accepts.
 // ============================================================
 async function saveVendor() {
   const name = vendorNameEl.value.trim();
-  const type = vendorTypeEl.value;
 
   if (name === '') {
     formMessage.textContent = 'Please enter a vendor name.';
@@ -103,11 +85,15 @@ async function saveVendor() {
     const response = await fetch(`${API_BASE}/vendors`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, type: type })
+      body: JSON.stringify({ name: name })
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error('Server returned an error');
+      formMessage.textContent = data.error || 'Could not save vendor.';
+      formMessage.className = 'form-message error';
+      return;
     }
 
     formMessage.textContent = 'Vendor added!';
@@ -117,7 +103,7 @@ async function saveVendor() {
     setTimeout(function () {
       overlay.classList.remove('open');
       formMessage.textContent = '';
-      loadContracts();
+      loadVendors();
     }, 800);
 
   } catch (error) {
@@ -132,4 +118,4 @@ saveBtn.addEventListener('click', saveVendor);
 // ============================================================
 // Run this once when the page first loads
 // ============================================================
-loadContracts();
+loadVendors();
