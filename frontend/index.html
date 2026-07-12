@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Day 2 — Vendor & Contract Dashboard (Static Shell)</title>
+<title>Day 3 — Vendor & Contract Dashboard (Wired to API)</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="page">
+  <div class="page-title">Vendor & Contract Dashboard</div>
+
   <div class="card">
     <div class="card-header">
       <h2>Contracts</h2>
@@ -20,46 +22,8 @@
       <span><span class="dot green"></span> Green — 21-30 days left</span>
     </div>
 
-    <div class="contract-row">
-      <div class="row-left">
-        <span class="dot red"></span>
-        <div>
-          <div class="vendor-name">Kyndryl Solutions</div>
-          <div class="contract-meta">Cloud Hosting &middot; Due 30 Sep 2025</div>
-        </div>
-      </div>
-      <div class="row-actions">
-        <button class="btn">View</button>
-        <button class="btn danger">Discontinue</button>
-      </div>
-    </div>
-
-    <div class="contract-row">
-      <div class="row-left">
-        <span class="dot yellow"></span>
-        <div>
-          <div class="vendor-name">Bharti Airtel Limited</div>
-          <div class="contract-meta">Hardware AMC/Infra Support &middot; Due 31 May 2027</div>
-        </div>
-      </div>
-      <div class="row-actions">
-        <button class="btn">View</button>
-        <button class="btn danger">Discontinue</button>
-      </div>
-    </div>
-
-    <div class="contract-row">
-      <div class="row-left">
-        <span class="dot green"></span>
-        <div>
-          <div class="vendor-name">Diamond Infotech Pvt. Ltd.</div>
-          <div class="contract-meta">Security &middot; Due 8 Jul 2026</div>
-        </div>
-      </div>
-      <div class="row-actions">
-        <button class="btn">View</button>
-        <button class="btn danger">Discontinue</button>
-      </div>
+    <div id="contractsList">
+      <p style="font-size:13px; color:#6b7684;">Loading contracts...</p>
     </div>
   </div>
 </div>
@@ -84,9 +48,11 @@
       </select>
     </div>
 
+    <p id="formMessage" class="form-message"></p>
+
     <div class="modal-actions">
       <button class="btn" id="cancelFormBtn">Cancel</button>
-      <button class="btn primary">Save</button>
+      <button class="btn primary" id="saveVendorBtn">Save</button>
     </div>
   </div>
 </div>

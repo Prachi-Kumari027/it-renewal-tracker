@@ -136,3 +136,12 @@ body {
   gap: 8px;
   margin-top: 18px;
 }
+
+/* ---------- Day 3 addition: form success/error message ---------- */
+.form-message {
+  font-size: 12px;
+  margin: 4px 0 0;
+  min-height: 14px;
+}
+.form-message.error { color: #a33d33; }
+.form-message.success { color: #229954; }
