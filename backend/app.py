@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from datetime import date, datetime
 import sqlite3
 
 app = Flask(__name__)
+CORS(app)
 DB_PATH = "vendor_contracts.db"
 
 
