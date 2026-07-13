@@ -1,4 +1,4 @@
--- Creates the 3 tables designed on Day 1: vendors, contracts, contract_history
+-- Creates the 3 tables designed on vendors, contracts, contract_history
 
 CREATE TABLE IF NOT EXISTS vendors (
     vendor_id       INTEGER PRIMARY KEY AUTOINCREMENT,
