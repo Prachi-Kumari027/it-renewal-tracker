@@ -1,18 +1,13 @@
-// ============================================================
-// CONFIG — matches Prachi's Flask server (confirmed running on port 5000)
-// ============================================================
 const API_BASE = 'http://localhost:5000/api';
 
-// ---------- Element references ----------
-const openBtn      = document.getElementById('openFormBtn');
-const cancelBtn    = document.getElementById('cancelFormBtn');
-const saveBtn      = document.getElementById('saveVendorBtn');
-const overlay      = document.getElementById('addVendorModal');
-const vendorNameEl = document.getElementById('vendorName');
-const formMessage  = document.getElementById('formMessage');
-const contractsList = document.getElementById('contractsList');
+const openBtn       = document.getElementById('openFormBtn');
+const cancelBtn     = document.getElementById('cancelFormBtn');
+const saveBtn       = document.getElementById('saveVendorBtn');
+const overlay       = document.getElementById('addVendorModal');
+const vendorNameEl  = document.getElementById('vendorName');
+const formMessage   = document.getElementById('formMessage');
+const contractsGrid = document.getElementById('contractsGrid');
 
-// ---------- Modal open/close ----------
 openBtn.addEventListener('click', function () {
   overlay.classList.add('open');
 });
@@ -25,22 +20,26 @@ overlay.addEventListener('click', function (event) {
   }
 });
 
-// ============================================================
-// NOTE: Prachi's backend only has /api/vendors right now — there's no
-// /api/contracts endpoint yet, and vendors don't have a due_date field.
-// So for now we just show vendor name + status, with NO color dot yet.
-// ============================================================
+function formatAmount(amount) {
+  if (amount === null || amount === undefined) return 'N/A';
+  return '₹' + Number(amount).toLocaleString('en-IN');
+}
 
-function vendorRowHTML(vendor) {
+function contractCardHTML(contract) {
+  const color = contract.color || 'gray';
+  const dueDateDisplay = contract.due_date || 'No due date';
+
   return `
-    <div class="contract-row">
-      <div class="row-left">
-        <div>
-          <div class="vendor-name">${vendor.name}</div>
-          <div class="contract-meta">Status: ${vendor.status}</div>
-        </div>
+    <div class="contract-card ${color}">
+      <div class="card-top">
+        <span class="dot ${color}"></span>
+        <span class="card-vendor-name">${contract.vendor_name}</span>
       </div>
-      <div class="row-actions">
+      <div class="card-field"><b>Type:</b> ${contract.contract_type || 'N/A'}</div>
+      <div class="card-field"><b>PO No:</b> ${contract.po_number || 'N/A'}</div>
+      <div class="card-field"><b>Due:</b> ${dueDateDisplay}</div>
+      <div class="card-field"><b>Amount:</b> ${formatAmount(contract.yearly_amount)}</div>
+      <div class="card-actions">
         <button class="btn">View</button>
         <button class="btn danger">Discontinue</button>
       </div>
@@ -48,30 +47,23 @@ function vendorRowHTML(vendor) {
   `;
 }
 
-// ============================================================
-// Load the real vendor list from the API (GET request)
-// ============================================================
-async function loadVendors() {
+async function loadContracts() {
   try {
-    const response = await fetch(`${API_BASE}/vendors`);
-    const vendors = await response.json();
+    const response = await fetch(`${API_BASE}/contracts`);
+    const contracts = await response.json();
 
-    if (vendors.length === 0) {
-      contractsList.innerHTML = `<p style="font-size:13px; color:#6b7684;">No vendors yet.</p>`;
+    if (contracts.length === 0) {
+      contractsGrid.innerHTML = `<p style="font-size:13px; color:#6b7684;">No contracts yet.</p>`;
       return;
     }
 
-    contractsList.innerHTML = vendors.map(vendorRowHTML).join('');
+    contractsGrid.innerHTML = contracts.map(contractCardHTML).join('');
   } catch (error) {
-    contractsList.innerHTML = `<p style="font-size:13px; color:#a33d33;">Could not load vendors. Is the backend running?</p>`;
-    console.error('Error loading vendors:', error);
+    contractsGrid.innerHTML = `<p style="font-size:13px; color:#a33d33;">Could not load contracts. Is the backend running?</p>`;
+    console.error('Error loading contracts:', error);
   }
 }
 
-// ============================================================
-// Save a new vendor (POST request) — only sends "name", since that's
-// all Prachi's backend currently accepts.
-// ============================================================
 async function saveVendor() {
   const name = vendorNameEl.value.trim();
 
@@ -103,7 +95,6 @@ async function saveVendor() {
     setTimeout(function () {
       overlay.classList.remove('open');
       formMessage.textContent = '';
-      loadVendors();
     }, 800);
 
   } catch (error) {
@@ -115,7 +106,4 @@ async function saveVendor() {
 
 saveBtn.addEventListener('click', saveVendor);
 
-// ============================================================
-// Run this once when the page first loads
-// ============================================================
-loadVendors();
+loadContracts();

@@ -7,17 +7,12 @@ body {
   padding: 32px;
 }
 .page {
-  max-width: 780px;
+  max-width: 900px;
   margin: 0 auto;
 }
 .page-title {
   font-size: 22px;
   font-weight: 700;
-  margin-bottom: 2px;
-}
-.page-sub {
-  font-size: 13px;
-  color: #6b7684;
   margin-bottom: 24px;
 }
 
@@ -82,19 +77,43 @@ body {
 .dot.red { background: #c0392b; }
 .dot.yellow { background: #d4ac0d; }
 .dot.green { background: #229954; }
+.dot.gray { background: #a9b1ba; }
 
-.contract-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #eef0f3;
+.contracts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
 }
-.contract-row:last-child { border-bottom: none; }
-.row-left { display: flex; align-items: center; gap: 12px; }
-.vendor-name { font-weight: 600; font-size: 14px; }
-.contract-meta { font-size: 12px; color: #6b7684; margin-top: 1px; }
-.row-actions { display: flex; gap: 8px; }
+
+.contract-card {
+  border: 1px solid #e4e8ed;
+  border-radius: 8px;
+  padding: 14px;
+  position: relative;
+}
+.contract-card.red    { border-left: 4px solid #c0392b; }
+.contract-card.yellow { border-left: 4px solid #d4ac0d; }
+.contract-card.green  { border-left: 4px solid #229954; }
+.contract-card.gray   { border-left: 4px solid #a9b1ba; }
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.card-vendor-name { font-weight: 600; font-size: 14px; }
+.card-field {
+  font-size: 12px;
+  color: #6b7684;
+  margin-top: 3px;
+}
+.card-field b { color: #1c2530; font-weight: 500; }
+.card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
 
 .modal-overlay {
   display: none;
@@ -136,8 +155,6 @@ body {
   gap: 8px;
   margin-top: 18px;
 }
-
-/* ---------- Day 3 addition: form success/error message ---------- */
 .form-message {
   font-size: 12px;
   margin: 4px 0 0;

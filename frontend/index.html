@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Day 3 — Vendor & Contract Dashboard (Wired to API)</title>
+<title>Vendor & Contract Dashboard</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,10 +19,10 @@
     <div class="legend">
       <span><span class="dot red"></span> Red — 10 days or fewer left</span>
       <span><span class="dot yellow"></span> Yellow — 11-20 days left</span>
-      <span><span class="dot green"></span> Green — 21-30 days left</span>
+      <span><span class="dot green"></span> Green — 21-30+ days left</span>
     </div>
 
-    <div id="contractsList">
+    <div id="contractsGrid" class="contracts-grid">
       <p style="font-size:13px; color:#6b7684;">Loading contracts...</p>
     </div>
   </div>
@@ -35,17 +35,6 @@
     <div class="field-group">
       <label for="vendorName">Vendor name</label>
       <input type="text" id="vendorName" placeholder="e.g. Kyndryl Solutions">
-    </div>
-
-    <div class="field-group">
-      <label for="vendorType">Type</label>
-      <select id="vendorType">
-        <option>Cloud Hosting</option>
-        <option>Application Support</option>
-        <option>Hardware AMC/Infra Support</option>
-        <option>Security</option>
-        <option>License</option>
-      </select>
     </div>
 
     <p id="formMessage" class="form-message"></p>
