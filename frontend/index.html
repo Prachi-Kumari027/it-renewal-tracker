@@ -13,7 +13,10 @@
   <div class="card">
     <div class="card-header">
       <h2>Contracts</h2>
-      <button class="btn primary" id="openFormBtn">+ Add vendor</button>
+      <div class="header-actions">
+        <button class="btn" id="openVendorFormBtn">+ Add vendor</button>
+        <button class="btn primary" id="openContractFormBtn">+ Add contract</button>
+      </div>
     </div>
 
     <div class="legend">
@@ -28,6 +31,7 @@
   </div>
 </div>
 
+<!-- ============ Add Vendor modal ============ -->
 <div class="modal-overlay" id="addVendorModal">
   <div class="modal-box">
     <h3>Add vendor</h3>
@@ -37,11 +41,94 @@
       <input type="text" id="vendorName" placeholder="e.g. Kyndryl Solutions">
     </div>
 
-    <p id="formMessage" class="form-message"></p>
+    <p id="vendorFormMessage" class="form-message"></p>
 
     <div class="modal-actions">
-      <button class="btn" id="cancelFormBtn">Cancel</button>
+      <button class="btn" id="cancelVendorFormBtn">Cancel</button>
       <button class="btn primary" id="saveVendorBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Add Contract modal ============ -->
+<div class="modal-overlay" id="addContractModal">
+  <div class="modal-box">
+    <h3>Add contract</h3>
+
+    <div class="field-group">
+      <label for="contractVendor">Vendor</label>
+      <select id="contractVendor">
+        <option value="">Loading vendors...</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label for="contractType">Type</label>
+      <select id="contractType">
+        <option>Cloud Hosting</option>
+        <option>Application Support</option>
+        <option>Hardware AMC/Infra Support</option>
+        <option>Security</option>
+        <option>License</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label for="contractPO">PO number</label>
+      <input type="text" id="contractPO" placeholder="e.g. 4550015959">
+    </div>
+
+    <div class="field-group">
+      <label for="contractStartDate">Start date</label>
+      <input type="date" id="contractStartDate">
+    </div>
+
+    <div class="field-group">
+      <label for="contractDueDate">Due date</label>
+      <input type="date" id="contractDueDate">
+    </div>
+
+    <div class="field-group">
+      <label for="contractAmount">Yearly amount</label>
+      <input type="number" id="contractAmount" placeholder="e.g. 250000">
+    </div>
+
+    <p id="contractFormMessage" class="form-message"></p>
+
+    <div class="modal-actions">
+      <button class="btn" id="cancelContractFormBtn">Cancel</button>
+      <button class="btn primary" id="saveContractBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Renew Contract modal ============ -->
+<div class="modal-overlay" id="renewModal">
+  <div class="modal-box">
+    <h3>Renew contract</h3>
+
+    <input type="hidden" id="renewContractId">
+
+    <div class="field-group">
+      <label>Current PO number</label>
+      <input type="text" id="renewOldPO" disabled>
+    </div>
+
+    <div class="field-group">
+      <label for="renewNewPO">New PO number</label>
+      <input type="text" id="renewNewPO" placeholder="e.g. 4550018200">
+    </div>
+
+    <div class="field-group">
+      <label for="renewNewDueDate">New due date</label>
+      <input type="date" id="renewNewDueDate">
+    </div>
+
+    <p id="renewFormMessage" class="form-message"></p>
+
+    <div class="modal-actions">
+      <button class="btn" id="cancelRenewFormBtn">Cancel</button>
+      <button class="btn primary" id="saveRenewBtn">Save renewal</button>
     </div>
   </div>
 </div>

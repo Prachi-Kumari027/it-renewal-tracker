@@ -36,6 +36,11 @@ body {
   font-weight: 600;
 }
 
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .btn {
   border: 1px solid #c7cdd6;
   background: #f6f7f9;
@@ -113,6 +118,7 @@ body {
   display: flex;
   gap: 6px;
   margin-top: 10px;
+  flex-wrap: wrap;
 }
 
 .modal-overlay {
@@ -132,6 +138,8 @@ body {
   width: 100%;
   max-width: 340px;
   box-shadow: 0 8px 28px rgba(20,30,40,0.18);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 .modal-box h3 { margin: 0 0 16px; font-size: 15px; }
 .field-group { margin-bottom: 14px; }
