@@ -1,4 +1,3 @@
--- Creates the 3 tables designed on vendors, contracts, contract_history
 
 CREATE TABLE IF NOT EXISTS vendors (
     vendor_id       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,6 +17,7 @@ CREATE TABLE IF NOT EXISTS contracts (
     po_number             TEXT,
     start_date            DATE,
     due_date              DATE,
+    end_date              DATE,
     yearly_amount         NUMERIC(12,2),
     pr_number             TEXT,
     procurement_status    TEXT,

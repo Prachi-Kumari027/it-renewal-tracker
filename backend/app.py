@@ -4,17 +4,18 @@ from datetime import date, datetime
 import sqlite3
 
 app = Flask(__name__)
-CORS(app)  
+CORS(app) 
 DB_PATH = "vendor_contracts.db"
 
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row 
+    conn.row_factory = sqlite3.Row  
     return conn
 
 
 def compute_days_remaining_and_color(due_date_str):
+    
     if not due_date_str:
         return None, "gray"
 
@@ -30,11 +31,14 @@ def compute_days_remaining_and_color(due_date_str):
 
     return days_remaining, color
 
+
 CONTRACT_FIELDS = [
     "contract_type", "details", "master_contract_note", "po_number",
-    "start_date", "due_date", "yearly_amount", "pr_number",
+    "start_date", "due_date", "end_date", "yearly_amount", "pr_number",
     "procurement_status", "app_status", "remarks",
 ]
+
+DATE_FIELDS = ("start_date", "due_date", "end_date")
 
 
 def is_valid_date(value):
@@ -48,7 +52,15 @@ def is_valid_date(value):
         return False
 
 
+def is_valid_po_number(value):
+    
+    if value is None or value == "":
+        return True
+    return str(value).isdigit()
+
+
 def fetch_full_contract(conn, contract_id):
+    
     row = conn.execute(
         """
         SELECT c.*, v.name AS vendor_name
@@ -114,7 +126,8 @@ def get_contracts():
     rows = conn.execute(
         """
         SELECT c.contract_id, c.vendor_id, v.name AS vendor_name,
-               c.contract_type, c.details, c.po_number, c.due_date, c.yearly_amount
+               c.contract_type, c.details, c.po_number, c.due_date, c.end_date,
+               c.yearly_amount, c.procurement_status, c.master_contract_note, c.remarks
         FROM contracts c
         JOIN vendors v ON v.vendor_id = c.vendor_id
         ORDER BY c.due_date IS NULL, c.due_date ASC
@@ -177,10 +190,14 @@ def add_contract():
         conn.close()
         return jsonify({"error": f"No vendor with vendor_id {vendor_id}"}), 404
 
-    for date_field in ("start_date", "due_date"):
+    for date_field in DATE_FIELDS:
         if not is_valid_date(data.get(date_field)):
             conn.close()
             return jsonify({"error": f"{date_field} must be in YYYY-MM-DD format"}), 400
+
+    if not is_valid_po_number(data.get("po_number")):
+        conn.close()
+        return jsonify({"error": "po_number must contain digits only, no letters"}), 400
 
     provided = {field: data[field] for field in CONTRACT_FIELDS if field in data}
     columns = ["vendor_id"] + list(provided.keys())
@@ -202,7 +219,6 @@ def add_contract():
 
 @app.route("/api/contracts/<int:contract_id>", methods=["PUT"])
 def update_contract(contract_id):
-    
     data = request.get_json(silent=True) or {}
 
     conn = get_db_connection()
@@ -215,10 +231,14 @@ def update_contract(contract_id):
         conn.close()
         return jsonify({"error": "Contract not found"}), 404
 
-    for date_field in ("start_date", "due_date"):
+    for date_field in DATE_FIELDS:
         if date_field in data and not is_valid_date(data.get(date_field)):
             conn.close()
             return jsonify({"error": f"{date_field} must be in YYYY-MM-DD format"}), 400
+
+    if "po_number" in data and not is_valid_po_number(data.get("po_number")):
+        conn.close()
+        return jsonify({"error": "po_number must contain digits only, no letters"}), 400
 
     fields_to_update = {k: v for k, v in data.items() if k in CONTRACT_FIELDS}
     if not fields_to_update:
@@ -255,7 +275,7 @@ def update_contract(contract_id):
 
 @app.route("/api/contracts/<int:contract_id>/history", methods=["GET"])
 def get_contract_history(contract_id):
-   
+    
     conn = get_db_connection()
 
     contract = conn.execute(
