@@ -36,11 +36,6 @@ body {
   font-weight: 600;
 }
 
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
-
 .btn {
   border: 1px solid #c7cdd6;
   background: #f6f7f9;
@@ -84,6 +79,7 @@ body {
 .dot.green { background: #229954; }
 .dot.gray { background: #a9b1ba; }
 
+/* ---------- NEW today: the card grid ---------- */
 .contracts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -110,17 +106,17 @@ body {
 .card-vendor-name { font-weight: 600; font-size: 14px; }
 .card-field {
   font-size: 12px;
-  color: #6b7684;
   margin-top: 3px;
 }
-.card-field b { color: #1c2530; font-weight: 500; }
+.card-field .label { color: #6b7684; }
+.card-field .value { color: #1c2530; font-weight: 500; }
 .card-actions {
   display: flex;
   gap: 6px;
   margin-top: 10px;
-  flex-wrap: wrap;
 }
 
+/* ---------- Add vendor form (unchanged) ---------- */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -138,8 +134,6 @@ body {
   width: 100%;
   max-width: 340px;
   box-shadow: 0 8px 28px rgba(20,30,40,0.18);
-  max-height: 90vh;
-  overflow-y: auto;
 }
 .modal-box h3 { margin: 0 0 16px; font-size: 15px; }
 .field-group { margin-bottom: 14px; }
@@ -170,3 +164,54 @@ body {
 }
 .form-message.error { color: #a33d33; }
 .form-message.success { color: #229954; }
+
+/* ---------- Day 5 additions ---------- */
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------- Day 6 additions: contract detail modal ---------- */
+.modal-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.modal-header-row h3 { margin: 0; }
+.close-x {
+  font-size: 18px;
+  color: #6b7684;
+  cursor: pointer;
+  line-height: 1;
+}
+.close-x:hover { color: #1c2530; }
+
+.detail-field {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 6px 0;
+  border-top: 1px dotted #eee;
+}
+.detail-field:first-child { border-top: none; }
+.detail-field span.label { color: #6b7684; }
+.detail-field span.value { font-weight: 500; text-align: right; }
+
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 16px 0 8px;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.history-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #57626f;
+  padding: 6px 0;
+  border-top: 1px dotted #eee;
+}
+.history-row:first-child { border-top: none; }
