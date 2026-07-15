@@ -13,11 +13,22 @@ const saveContractBtn       = document.getElementById('saveContractBtn');
 const contractOverlay       = document.getElementById('addContractModal');
 const contractVendorEl      = document.getElementById('contractVendor');
 const contractTypeEl        = document.getElementById('contractType');
+const contractTypeOtherGroup = document.getElementById('contractTypeOtherGroup');
+const contractTypeOtherEl   = document.getElementById('contractTypeOther');
 const contractPOEl          = document.getElementById('contractPO');
 const contractStartDateEl   = document.getElementById('contractStartDate');
+const contractEndDateEl     = document.getElementById('contractEndDate');
 const contractDueDateEl     = document.getElementById('contractDueDate');
 const contractAmountEl      = document.getElementById('contractAmount');
 const contractFormMessage   = document.getElementById('contractFormMessage');
+
+contractTypeEl.addEventListener('change', function () {
+  contractTypeOtherGroup.style.display = (contractTypeEl.value === 'other') ? 'block' : 'none';
+});
+
+contractPOEl.addEventListener('input', function () {
+  contractPOEl.value = contractPOEl.value.replace(/\D/g, '');
+});
 
 const cancelRenewFormBtn = document.getElementById('cancelRenewFormBtn');
 const saveRenewBtn       = document.getElementById('saveRenewBtn');
@@ -27,6 +38,16 @@ const renewOldPOEl       = document.getElementById('renewOldPO');
 const renewNewPOEl       = document.getElementById('renewNewPO');
 const renewNewDueDateEl  = document.getElementById('renewNewDueDate');
 const renewFormMessage   = document.getElementById('renewFormMessage');
+
+renewNewPOEl.addEventListener('input', function () {
+  renewNewPOEl.value = renewNewPOEl.value.replace(/\D/g, '');
+});
+
+const detailOverlay     = document.getElementById('detailModal');
+const closeDetailBtn    = document.getElementById('closeDetailBtn');
+const detailVendorName  = document.getElementById('detailVendorName');
+const detailFields      = document.getElementById('detailFields');
+const detailHistory     = document.getElementById('detailHistory');
 
 const contractsGrid = document.getElementById('contractsGrid');
 
@@ -80,13 +101,34 @@ contractsGrid.addEventListener('click', function (event) {
     renewFormMessage.textContent = '';
     renewOverlay.classList.add('open');
   }
+
+  if (event.target.matches('.btn.view')) {
+    const card = event.target.closest('.contract-card');
+    openDetailModal(card.dataset.contractId);
+  }
 });
+
 cancelRenewFormBtn.addEventListener('click', function () {
   renewOverlay.classList.remove('open');
 });
 renewOverlay.addEventListener('click', function (event) {
   if (event.target === renewOverlay) renewOverlay.classList.remove('open');
 });
+
+closeDetailBtn.addEventListener('click', function () {
+  detailOverlay.classList.remove('open');
+});
+detailOverlay.addEventListener('click', function (event) {
+  if (event.target === detailOverlay) detailOverlay.classList.remove('open');
+});
+
+function formatDateDMY(dateStr) {
+  if (!dateStr) return null;
+  const datePart = dateStr.split(' ')[0];
+  const [year, month, day] = datePart.split('-');
+  if (!year || !month || !day) return dateStr;
+  return `${day}-${month}-${year}`;
+}
 
 function formatAmount(amount) {
   if (amount === null || amount === undefined) return 'N/A';
@@ -95,7 +137,7 @@ function formatAmount(amount) {
 
 function contractCardHTML(contract) {
   const color = contract.color || 'gray';
-  const dueDateDisplay = contract.due_date || 'No due date';
+  const dueDateDisplay = formatDateDMY(contract.due_date) || 'No due date';
 
   return `
     <div class="contract-card ${color}"
@@ -105,12 +147,15 @@ function contractCardHTML(contract) {
         <span class="dot ${color}"></span>
         <span class="card-vendor-name">${contract.vendor_name}</span>
       </div>
-      <div class="card-field"><b>Type:</b> ${contract.contract_type || 'N/A'}</div>
-      <div class="card-field"><b>PO No:</b> ${contract.po_number || 'N/A'}</div>
-      <div class="card-field"><b>Due:</b> ${dueDateDisplay}</div>
-      <div class="card-field"><b>Amount:</b> ${formatAmount(contract.yearly_amount)}</div>
+      <div class="card-field"><span class="label">Type:</span> <span class="value">${contract.contract_type || 'N/A'}</span></div>
+      <div class="card-field"><span class="label">PO No:</span> <span class="value">${contract.po_number || 'N/A'}</span></div>
+      <div class="card-field"><span class="label">Due:</span> <span class="value">${dueDateDisplay}</span></div>
+      <div class="card-field"><span class="label">Amount:</span> <span class="value">${formatAmount(contract.yearly_amount)}</span></div>
+      <div class="card-field"><span class="label">Status:</span> <span class="value">${contract.procurement_status || 'N/A'}</span></div>
+      <div class="card-field"><span class="label">Master Contract:</span> <span class="value">${contract.master_contract_note || 'N/A'}</span></div>
+      <div class="card-field"><span class="label">Remarks:</span> <span class="value">${contract.remarks || 'N/A'}</span></div>
       <div class="card-actions">
-        <button class="btn">View</button>
+        <button class="btn view">View</button>
         <button class="btn renew">Renew</button>
         <button class="btn danger">Discontinue</button>
       </div>
@@ -185,11 +230,16 @@ async function saveContract() {
     return;
   }
 
+  const selectedType = contractTypeEl.value === 'other'
+    ? contractTypeOtherEl.value.trim()
+    : contractTypeEl.value;
+
   const payload = {
     vendor_id: Number(vendorId),
-    contract_type: contractTypeEl.value,
+    contract_type: selectedType,
     po_number: contractPOEl.value.trim(),
     start_date: contractStartDateEl.value || null,
+    end_date: contractEndDateEl.value || null,
     due_date: contractDueDateEl.value || null,
     yearly_amount: contractAmountEl.value ? Number(contractAmountEl.value) : null
   };
@@ -214,8 +264,12 @@ async function saveContract() {
 
     contractPOEl.value = '';
     contractStartDateEl.value = '';
+    contractEndDateEl.value = '';
     contractDueDateEl.value = '';
     contractAmountEl.value = '';
+    contractTypeEl.value = 'Cloud Hosting';
+    contractTypeOtherEl.value = '';
+    contractTypeOtherGroup.style.display = 'none';
 
     setTimeout(function () {
       contractOverlay.classList.remove('open');
@@ -273,5 +327,73 @@ async function saveRenewal() {
   }
 }
 saveRenewBtn.addEventListener('click', saveRenewal);
+
+function formatDate(value) {
+  return formatDateDMY(value) || 'N/A';
+}
+
+function renderDetailFields(contract) {
+  const rows = [
+    ['Type', contract.contract_type],
+    ['PO Number', contract.po_number],
+    ['Start Date', formatDate(contract.start_date)],
+    ['Due Date', formatDate(contract.due_date)],
+    ['Amount', formatAmount(contract.yearly_amount)],
+    ['Status', contract.procurement_status],
+    ['Master Contract', contract.master_contract_note],
+    ['Remarks', contract.remarks],
+  ];
+
+  detailFields.innerHTML = rows
+    .map(([label, value]) => `
+      <div class="detail-field">
+        <span class="label">${label}</span>
+        <span class="value">${value || 'N/A'}</span>
+      </div>
+    `)
+    .join('');
+}
+
+function renderHistory(historyRows) {
+  if (historyRows.length === 0) {
+    detailHistory.innerHTML = `<p style="font-size:12px; color:#6b7684;">No renewal history yet.</p>`;
+    return;
+  }
+
+  detailHistory.innerHTML = historyRows
+    .map(h => `
+      <div class="history-row">
+        <span>PO ${h.old_po_number}</span>
+        <span>Changed ${formatDate(h.changed_on)}</span>
+      </div>
+    `)
+    .join('');
+}
+
+async function openDetailModal(contractId) {
+  detailVendorName.textContent = 'Loading...';
+  detailFields.innerHTML = '';
+  detailHistory.innerHTML = `<p style="font-size:12px; color:#6b7684;">Loading history...</p>`;
+  detailOverlay.classList.add('open');
+
+  try {
+    const [contractResponse, historyResponse] = await Promise.all([
+      fetch(`${API_BASE}/contracts/${contractId}`),
+      fetch(`${API_BASE}/contracts/${contractId}/history`)
+    ]);
+
+    const contract = await contractResponse.json();
+    const history = await historyResponse.json();
+
+    detailVendorName.textContent = contract.vendor_name;
+    renderDetailFields(contract);
+    renderHistory(history);
+
+  } catch (error) {
+    detailVendorName.textContent = 'Error';
+    detailFields.innerHTML = `<p style="font-size:12px; color:#a33d33;">Could not load contract details.</p>`;
+    console.error('Error loading contract detail:', error);
+  }
+}
 
 loadContracts();
