@@ -4,7 +4,7 @@ from datetime import date, datetime
 import sqlite3
 
 app = Flask(__name__)
-CORS(app) 
+CORS(app)  
 DB_PATH = "vendor_contracts.db"
 
 
@@ -30,7 +30,6 @@ def compute_days_remaining_and_color(due_date_str):
         color = "green"
 
     return days_remaining, color
-
 
 CONTRACT_FIELDS = [
     "contract_type", "details", "master_contract_note", "po_number",
@@ -79,6 +78,41 @@ def fetch_full_contract(conn, contract_id):
     contract["days_remaining"] = days_remaining
     contract["color"] = color
     return contract
+
+
+@app.route("/api/vendors/<int:vendor_id>/discontinue", methods=["PUT"])
+def discontinue_vendor(vendor_id):
+    
+    conn = get_db_connection()
+
+    vendor = conn.execute(
+        "SELECT vendor_id, status FROM vendors WHERE vendor_id = ?", (vendor_id,)
+    ).fetchone()
+    if vendor is None:
+        conn.close()
+        return jsonify({"error": "Vendor not found"}), 404
+
+    if vendor["status"] == "discontinued":
+        conn.close()
+        return jsonify({"error": "Vendor is already discontinued"}), 409
+
+    conn.execute(
+        """
+        UPDATE vendors
+        SET status = 'discontinued', discontinued_on = date('now'), updated_at = CURRENT_TIMESTAMP
+        WHERE vendor_id = ?
+        """,
+        (vendor_id,),
+    )
+    conn.commit()
+
+    row = conn.execute(
+        "SELECT vendor_id, name, status, discontinued_on FROM vendors WHERE vendor_id = ?",
+        (vendor_id,),
+    ).fetchone()
+    conn.close()
+
+    return jsonify(dict(row))
 
 
 @app.route("/api/vendors", methods=["GET"])
@@ -219,6 +253,7 @@ def add_contract():
 
 @app.route("/api/contracts/<int:contract_id>", methods=["PUT"])
 def update_contract(contract_id):
+    
     data = request.get_json(silent=True) or {}
 
     conn = get_db_connection()
@@ -275,7 +310,6 @@ def update_contract(contract_id):
 
 @app.route("/api/contracts/<int:contract_id>/history", methods=["GET"])
 def get_contract_history(contract_id):
-    
     conn = get_db_connection()
 
     contract = conn.execute(
