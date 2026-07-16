@@ -1,5 +1,6 @@
 const API_BASE = 'http://localhost:5000/api';
 
+// ---------- Element references: vendor form ----------
 const openVendorFormBtn   = document.getElementById('openVendorFormBtn');
 const cancelVendorFormBtn = document.getElementById('cancelVendorFormBtn');
 const saveVendorBtn       = document.getElementById('saveVendorBtn');
@@ -7,6 +8,7 @@ const vendorOverlay       = document.getElementById('addVendorModal');
 const vendorNameEl        = document.getElementById('vendorName');
 const vendorFormMessage   = document.getElementById('vendorFormMessage');
 
+// ---------- Element references: contract form ----------
 const openContractFormBtn   = document.getElementById('openContractFormBtn');
 const cancelContractFormBtn = document.getElementById('cancelContractFormBtn');
 const saveContractBtn       = document.getElementById('saveContractBtn');
@@ -22,14 +24,18 @@ const contractDueDateEl     = document.getElementById('contractDueDate');
 const contractAmountEl      = document.getElementById('contractAmount');
 const contractFormMessage   = document.getElementById('contractFormMessage');
 
+// Show the "custom type" box only when "Other" is selected
 contractTypeEl.addEventListener('change', function () {
   contractTypeOtherGroup.style.display = (contractTypeEl.value === 'other') ? 'block' : 'none';
 });
 
+// PO number: strip out anything that isn't a digit, as the user types.
+// This is what makes letters "impossible" to type, not just rejected on submit.
 contractPOEl.addEventListener('input', function () {
   contractPOEl.value = contractPOEl.value.replace(/\D/g, '');
 });
 
+// ---------- Element references: renew form ----------
 const cancelRenewFormBtn = document.getElementById('cancelRenewFormBtn');
 const saveRenewBtn       = document.getElementById('saveRenewBtn');
 const renewOverlay       = document.getElementById('renewModal');
@@ -39,10 +45,12 @@ const renewNewPOEl       = document.getElementById('renewNewPO');
 const renewNewDueDateEl  = document.getElementById('renewNewDueDate');
 const renewFormMessage   = document.getElementById('renewFormMessage');
 
+// Same digit-only restriction for the renew form's PO field
 renewNewPOEl.addEventListener('input', function () {
   renewNewPOEl.value = renewNewPOEl.value.replace(/\D/g, '');
 });
 
+// ---------- Element references: detail modal (NEW today) ----------
 const detailOverlay     = document.getElementById('detailModal');
 const closeDetailBtn    = document.getElementById('closeDetailBtn');
 const detailVendorName  = document.getElementById('detailVendorName');
@@ -50,7 +58,19 @@ const detailFields      = document.getElementById('detailFields');
 const detailHistory     = document.getElementById('detailHistory');
 
 const contractsGrid = document.getElementById('contractsGrid');
+const showDiscontinuedToggle = document.getElementById('showDiscontinuedToggle');
 
+// Keeps the last-fetched contracts in memory, so toggling "show
+// discontinued" can just re-render instantly without re-fetching.
+let allContracts = [];
+
+showDiscontinuedToggle.addEventListener('change', function () {
+  renderContracts(allContracts);
+});
+
+// ============================================================
+// Vendor form open/close (same pattern as before)
+// ============================================================
 openVendorFormBtn.addEventListener('click', function () {
   vendorOverlay.classList.add('open');
 });
@@ -61,6 +81,11 @@ vendorOverlay.addEventListener('click', function (event) {
   if (event.target === vendorOverlay) vendorOverlay.classList.remove('open');
 });
 
+// ============================================================
+// Contract form open/close — NEW today.
+// When opening, we first load the vendor list into the dropdown,
+// since a contract must belong to a real vendor.
+// ============================================================
 openContractFormBtn.addEventListener('click', async function () {
   await populateVendorDropdown();
   contractOverlay.classList.add('open');
@@ -82,6 +107,8 @@ async function populateVendorDropdown() {
       return;
     }
 
+    // Build one <option> per vendor. value = vendor_id (what the API needs),
+    // visible text = vendor name (what the user reads).
     contractVendorEl.innerHTML = vendors
       .map(v => `<option value="${v.vendor_id}">${v.name}</option>`)
       .join('');
@@ -91,6 +118,12 @@ async function populateVendorDropdown() {
   }
 }
 
+// ============================================================
+// Renew form open/close — opened from a "Renew" button on a card,
+// so there's no single fixed button to attach this to up front.
+// Instead, we use "event delegation": listen on the whole grid,
+// and check if a Renew button was the thing clicked.
+// ============================================================
 contractsGrid.addEventListener('click', function (event) {
   if (event.target.matches('.btn.renew')) {
     const card = event.target.closest('.contract-card');
@@ -106,8 +139,14 @@ contractsGrid.addEventListener('click', function (event) {
     const card = event.target.closest('.contract-card');
     openDetailModal(card.dataset.contractId);
   }
-});
 
+  if (event.target.matches('.btn.danger')) {
+    const card = event.target.closest('.contract-card');
+    const vendorId = card.dataset.vendorId;
+    const vendorName = card.querySelector('.card-vendor-name').textContent;
+    discontinueVendor(vendorId, vendorName);
+  }
+});
 cancelRenewFormBtn.addEventListener('click', function () {
   renewOverlay.classList.remove('open');
 });
@@ -115,6 +154,9 @@ renewOverlay.addEventListener('click', function (event) {
   if (event.target === renewOverlay) renewOverlay.classList.remove('open');
 });
 
+// ============================================================
+// Detail modal open/close — NEW today.
+// ============================================================
 closeDetailBtn.addEventListener('click', function () {
   detailOverlay.classList.remove('open');
 });
@@ -122,11 +164,19 @@ detailOverlay.addEventListener('click', function (event) {
   if (event.target === detailOverlay) detailOverlay.classList.remove('open');
 });
 
+// ============================================================
+// Rendering contract cards — added data-* attributes so the Renew
+// button click handler above can find the right contract.
+// ============================================================
+// Converts "YYYY-MM-DD" (how dates are stored/sent) into "DD-MM-YYYY"
+// (how the mentor wants them displayed). Only affects what's SHOWN —
+// the actual <input type="date"> fields still use YYYY-MM-DD internally,
+// since that's a browser requirement, not something we can change.
 function formatDateDMY(dateStr) {
   if (!dateStr) return null;
-  const datePart = dateStr.split(' ')[0];
+  const datePart = dateStr.split(' ')[0]; // drop time if present
   const [year, month, day] = datePart.split('-');
-  if (!year || !month || !day) return dateStr;
+  if (!year || !month || !day) return dateStr; // fallback, just in case
   return `${day}-${month}-${year}`;
 }
 
@@ -138,14 +188,17 @@ function formatAmount(amount) {
 function contractCardHTML(contract) {
   const color = contract.color || 'gray';
   const dueDateDisplay = formatDateDMY(contract.due_date) || 'No due date';
+  const isDiscontinued = contract.vendor_status === 'discontinued';
 
   return `
-    <div class="contract-card ${color}"
+    <div class="contract-card ${color} ${isDiscontinued ? 'discontinued' : ''}"
          data-contract-id="${contract.contract_id}"
+         data-vendor-id="${contract.vendor_id}"
          data-po-number="${contract.po_number || ''}">
       <div class="card-top">
         <span class="dot ${color}"></span>
         <span class="card-vendor-name">${contract.vendor_name}</span>
+        ${isDiscontinued ? '<span class="discontinued-badge">Discontinued</span>' : ''}
       </div>
       <div class="card-field"><span class="label">Type:</span> <span class="value">${contract.contract_type || 'N/A'}</span></div>
       <div class="card-field"><span class="label">PO No:</span> <span class="value">${contract.po_number || 'N/A'}</span></div>
@@ -157,7 +210,7 @@ function contractCardHTML(contract) {
       <div class="card-actions">
         <button class="btn view">View</button>
         <button class="btn renew">Renew</button>
-        <button class="btn danger">Discontinue</button>
+        <button class="btn danger" ${isDiscontinued ? 'disabled' : ''}>Discontinue</button>
       </div>
     </div>
   `;
@@ -165,21 +218,86 @@ function contractCardHTML(contract) {
 
 async function loadContracts() {
   try {
-    const response = await fetch(`${API_BASE}/contracts`);
-    const contracts = await response.json();
+    // Fetch contracts AND vendors together — we need the vendor list to
+    // know each vendor's status (active/discontinued), since /api/contracts
+    // doesn't include that itself.
+    const [contractsResponse, vendorsResponse] = await Promise.all([
+      fetch(`${API_BASE}/contracts`),
+      fetch(`${API_BASE}/vendors`)
+    ]);
 
-    if (contracts.length === 0) {
-      contractsGrid.innerHTML = `<p style="font-size:13px; color:#6b7684;">No contracts yet.</p>`;
-      return;
-    }
+    const contracts = await contractsResponse.json();
+    const vendors = await vendorsResponse.json();
 
-    contractsGrid.innerHTML = contracts.map(contractCardHTML).join('');
+    // Build a quick lookup: vendor_id -> status
+    const vendorStatusById = {};
+    vendors.forEach(v => { vendorStatusById[v.vendor_id] = v.status; });
+
+    // Attach each contract's vendor status onto the contract itself,
+    // so contractCardHTML can use it without a second lookup later.
+    allContracts = contracts.map(c => ({
+      ...c,
+      vendor_status: vendorStatusById[c.vendor_id] || 'active'
+    }));
+
+    renderContracts(allContracts);
   } catch (error) {
     contractsGrid.innerHTML = `<p style="font-size:13px; color:#a33d33;">Could not load contracts. Is the backend running?</p>`;
     console.error('Error loading contracts:', error);
   }
 }
 
+// Separated from loadContracts so the toggle can re-render instantly
+// from the already-fetched data, without hitting the API again.
+function renderContracts(contracts) {
+  const showDiscontinued = showDiscontinuedToggle.checked;
+
+  const visibleContracts = showDiscontinued
+    ? contracts
+    : contracts.filter(c => c.vendor_status !== 'discontinued');
+
+  if (visibleContracts.length === 0) {
+    contractsGrid.innerHTML = `<p style="font-size:13px; color:#6b7684;">No contracts to show.</p>`;
+    return;
+  }
+
+  contractsGrid.innerHTML = visibleContracts.map(contractCardHTML).join('');
+}
+
+// ============================================================
+// NEW: Discontinue a vendor (PUT /api/vendors/<id>/discontinue)
+// ============================================================
+async function discontinueVendor(vendorId, vendorName) {
+  // A native browser confirm() dialog — simple, but does exactly what's
+  // needed: pause and make sure this wasn't an accidental click.
+  const confirmed = window.confirm(
+    `Are you sure you want to discontinue "${vendorName}"? This won't delete anything — it just marks the vendor as discontinued.`
+  );
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/vendors/${vendorId}/discontinue`, {
+      method: 'PUT'
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.error || 'Could not discontinue vendor.');
+      return;
+    }
+
+    loadContracts(); // refresh so the badge/filtering reflect the change
+
+  } catch (error) {
+    alert('Could not discontinue vendor. Is the backend running?');
+    console.error('Error discontinuing vendor:', error);
+  }
+}
+
+// ============================================================
+// Save a new vendor (unchanged)
+// ============================================================
 async function saveVendor() {
   const name = vendorNameEl.value.trim();
 
@@ -221,6 +339,9 @@ async function saveVendor() {
 }
 saveVendorBtn.addEventListener('click', saveVendor);
 
+// ============================================================
+// NEW: Save a new contract (POST /api/contracts)
+// ============================================================
 async function saveContract() {
   const vendorId = contractVendorEl.value;
 
@@ -230,6 +351,7 @@ async function saveContract() {
     return;
   }
 
+  // If "Other" was picked, use whatever the user typed instead
   const selectedType = contractTypeEl.value === 'other'
     ? contractTypeOtherEl.value.trim()
     : contractTypeEl.value;
@@ -239,7 +361,7 @@ async function saveContract() {
     contract_type: selectedType,
     po_number: contractPOEl.value.trim(),
     start_date: contractStartDateEl.value || null,
-    end_date: contractEndDateEl.value || null,
+    end_date: contractEndDateEl.value || null,   // NOTE: backend doesn't store this yet
     due_date: contractDueDateEl.value || null,
     yearly_amount: contractAmountEl.value ? Number(contractAmountEl.value) : null
   };
@@ -262,6 +384,7 @@ async function saveContract() {
     contractFormMessage.textContent = 'Contract added!';
     contractFormMessage.className = 'form-message success';
 
+    // Clear the form fields
     contractPOEl.value = '';
     contractStartDateEl.value = '';
     contractEndDateEl.value = '';
@@ -274,7 +397,7 @@ async function saveContract() {
     setTimeout(function () {
       contractOverlay.classList.remove('open');
       contractFormMessage.textContent = '';
-      loadContracts();
+      loadContracts(); // refresh grid so the new contract appears
     }, 800);
 
   } catch (error) {
@@ -285,6 +408,9 @@ async function saveContract() {
 }
 saveContractBtn.addEventListener('click', saveContract);
 
+// ============================================================
+// NEW: Save a renewal (PUT /api/contracts/<id>)
+// ============================================================
 async function saveRenewal() {
   const contractId = renewContractIdEl.value;
   const newPO = renewNewPOEl.value.trim();
@@ -317,7 +443,7 @@ async function saveRenewal() {
     setTimeout(function () {
       renewOverlay.classList.remove('open');
       renewFormMessage.textContent = '';
-      loadContracts();
+      loadContracts(); // refresh grid so the updated due date/color show up
     }, 800);
 
   } catch (error) {
@@ -328,6 +454,14 @@ async function saveRenewal() {
 }
 saveRenewBtn.addEventListener('click', saveRenewal);
 
+// ============================================================
+// NEW: Contract detail modal — fetches full contract info AND
+// its renewal history, then fills in the modal with both.
+// ============================================================
+
+// (formatDateDMY, defined above near contractCardHTML, is used for all
+// date display now — this old formatDate is kept only as a safe fallback
+// name in case it's referenced elsewhere, but points to the same logic.)
 function formatDate(value) {
   return formatDateDMY(value) || 'N/A';
 }
@@ -377,6 +511,8 @@ async function openDetailModal(contractId) {
   detailOverlay.classList.add('open');
 
   try {
+    // Fetch both the contract details and its history at the same time,
+    // instead of one after another — Promise.all runs them in parallel.
     const [contractResponse, historyResponse] = await Promise.all([
       fetch(`${API_BASE}/contracts/${contractId}`),
       fetch(`${API_BASE}/contracts/${contractId}/history`)
@@ -396,4 +532,7 @@ async function openDetailModal(contractId) {
   }
 }
 
+// ============================================================
+// Run this once when the page first loads
+// ============================================================
 loadContracts();

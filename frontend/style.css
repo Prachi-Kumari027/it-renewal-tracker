@@ -215,3 +215,35 @@ body {
   border-top: 1px dotted #eee;
 }
 .history-row:first-child { border-top: none; }
+
+/* ---------- Day 7 additions ---------- */
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  cursor: pointer;
+}
+.toggle-label input { cursor: pointer; }
+
+.discontinued-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #a33d33;
+  background: #fdf2f1;
+  border: 1px solid #e2b4b0;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.contract-card.discontinued {
+  opacity: 0.6;
+}
+
+.btn.danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
