@@ -92,10 +92,10 @@ body {
   padding: 14px;
   position: relative;
 }
-.contract-card.red    { border-left: 4px solid #c0392b; }
-.contract-card.yellow { border-left: 4px solid #d4ac0d; }
-.contract-card.green  { border-left: 4px solid #229954; }
-.contract-card.gray   { border-left: 4px solid #a9b1ba; }
+.contract-card.red    { border-left: 4px solid #c0392b; background: rgba(192, 57, 43, 0.18); }
+.contract-card.yellow { border-left: 4px solid #d4ac0d; background: rgba(212, 172, 13, 0.20); }
+.contract-card.green  { border-left: 4px solid #229954; background: rgba(34, 153, 84, 0.18); }
+.contract-card.gray   { border-left: 4px solid #a9b1ba; background: rgba(169, 177, 186, 0.20); }
 
 .card-top {
   display: flex;
@@ -246,4 +246,41 @@ body {
 .btn.danger:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ---------- Day 8 addition: search bar ---------- */
+.search-row {
+  margin-bottom: 12px;
+}
+.search-row input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 13px;
+  border: 1px solid #c7cdd6;
+  border-radius: 6px;
+  font-family: inherit;
+}
+.search-row input:focus {
+  outline: none;
+  border-color: #2b3a67;
+}
+
+/* ---------- Day 9 addition: filter dropdowns ---------- */
+.filter-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.filter-row select {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px solid #c7cdd6;
+  border-radius: 6px;
+  font-family: inherit;
+  background: #fff;
+}
+.filter-row select:focus {
+  outline: none;
+  border-color: #2b3a67;
 }

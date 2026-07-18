@@ -59,14 +59,43 @@ const detailHistory     = document.getElementById('detailHistory');
 
 const contractsGrid = document.getElementById('contractsGrid');
 const showDiscontinuedToggle = document.getElementById('showDiscontinuedToggle');
+const searchInput = document.getElementById('searchInput');
+const typeFilter = document.getElementById('typeFilter');
+const statusFilter = document.getElementById('statusFilter');
 
-// Keeps the last-fetched contracts in memory, so toggling "show
-// discontinued" can just re-render instantly without re-fetching.
+// Keeps the last-fetched contracts in memory, so toggling/searching/
+// filtering can just re-render instantly without re-fetching.
 let allContracts = [];
 
 showDiscontinuedToggle.addEventListener('change', function () {
   renderContracts(allContracts);
 });
+
+searchInput.addEventListener('input', function () {
+  renderContracts(allContracts);
+});
+
+typeFilter.addEventListener('change', function () {
+  renderContracts(allContracts);
+});
+
+statusFilter.addEventListener('change', function () {
+  renderContracts(allContracts);
+});
+
+// Fills a <select> with unique values pulled straight from the actual
+// contract data — so the dropdown always matches what's really in the
+// database, instead of a hardcoded list that could go stale.
+function populateFilterOptions(contracts) {
+  const types = [...new Set(contracts.map(c => c.contract_type).filter(Boolean))].sort();
+  const statuses = [...new Set(contracts.map(c => c.procurement_status).filter(Boolean))].sort();
+
+  typeFilter.innerHTML = `<option value="">All types</option>` +
+    types.map(t => `<option value="${t}">${t}</option>`).join('');
+
+  statusFilter.innerHTML = `<option value="">All statuses</option>` +
+    statuses.map(s => `<option value="${s}">${s}</option>`).join('');
+}
 
 // ============================================================
 // Vendor form open/close (same pattern as before)
@@ -240,6 +269,7 @@ async function loadContracts() {
       vendor_status: vendorStatusById[c.vendor_id] || 'active'
     }));
 
+    populateFilterOptions(allContracts);
     renderContracts(allContracts);
   } catch (error) {
     contractsGrid.innerHTML = `<p style="font-size:13px; color:#a33d33;">Could not load contracts. Is the backend running?</p>`;
@@ -247,14 +277,29 @@ async function loadContracts() {
   }
 }
 
-// Separated from loadContracts so the toggle can re-render instantly
-// from the already-fetched data, without hitting the API again.
+// Separated from loadContracts so the toggle/search can re-render
+// instantly from the already-fetched data, without hitting the API again.
 function renderContracts(contracts) {
   const showDiscontinued = showDiscontinuedToggle.checked;
+  const searchTerm = searchInput.value.trim().toLowerCase();
+  const selectedType = typeFilter.value;
+  const selectedStatus = statusFilter.value;
 
-  const visibleContracts = showDiscontinued
+  let visibleContracts = showDiscontinued
     ? contracts
     : contracts.filter(c => c.vendor_status !== 'discontinued');
+
+  if (searchTerm !== '') {
+    visibleContracts = visibleContracts.filter(c => matchesSearch(c, searchTerm));
+  }
+
+  if (selectedType !== '') {
+    visibleContracts = visibleContracts.filter(c => c.contract_type === selectedType);
+  }
+
+  if (selectedStatus !== '') {
+    visibleContracts = visibleContracts.filter(c => c.procurement_status === selectedStatus);
+  }
 
   if (visibleContracts.length === 0) {
     contractsGrid.innerHTML = `<p style="font-size:13px; color:#6b7684;">No contracts to show.</p>`;
@@ -262,6 +307,24 @@ function renderContracts(contracts) {
   }
 
   contractsGrid.innerHTML = visibleContracts.map(contractCardHTML).join('');
+}
+
+// Checks a single contract against the search term across several
+// fields at once — the user just types, they don't pick which field.
+// String(...) handles fields that might be numbers (like po_number).
+function matchesSearch(contract, term) {
+  const searchableFields = [
+    contract.vendor_name,
+    contract.contract_type,
+    contract.po_number,
+    contract.master_contract_note,
+    contract.remarks,
+    contract.procurement_status
+  ];
+
+  return searchableFields.some(field =>
+    field && String(field).toLowerCase().includes(term)
+  );
 }
 
 // ============================================================
