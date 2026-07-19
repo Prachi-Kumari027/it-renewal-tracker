@@ -284,3 +284,45 @@ body {
   outline: none;
   border-color: #2b3a67;
 }
+/* ---------- Day 11 additions: page header row + recipients page ---------- */
+.page-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.page-title-row .btn {
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.add-recipient-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.add-recipient-row input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px solid #c7cdd6;
+  border-radius: 6px;
+  font-family: inherit;
+}
+.add-recipient-row input:focus {
+  outline: none;
+  border-color: #2b3a67;
+}
+
+.recipients-list {
+  margin-top: 16px;
+}
+.recipient-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef0f3;
+  font-size: 13px;
+}
+.recipient-row:last-child { border-bottom: none; }
