@@ -1,4 +1,3 @@
-
 CREATE TABLE IF NOT EXISTS vendors (
     vendor_id       INTEGER PRIMARY KEY AUTOINCREMENT,
     name            TEXT NOT NULL UNIQUE,
@@ -36,6 +35,12 @@ CREATE TABLE IF NOT EXISTS contract_history (
     old_start_date DATE,
     changed_on     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     note           TEXT
+);
+
+CREATE TABLE IF NOT EXISTS recipients (
+    recipient_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email        TEXT NOT NULL UNIQUE,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_contracts_vendor_id ON contracts(vendor_id);

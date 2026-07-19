@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from datetime import date, datetime
+import re
 import sqlite3
 
 app = Flask(__name__)
@@ -117,10 +118,22 @@ def discontinue_vendor(vendor_id):
 
 @app.route("/api/vendors", methods=["GET"])
 def get_vendors():
+    """
+    Optional query param:
+      ?status=active | discontinued  -> filter by vendor status
+    No params = everyone, same as before (nothing breaks for existing callers).
+    """
+    status = request.args.get("status")
+
+    query = "SELECT vendor_id, name, status FROM vendors"
+    params = []
+    if status:
+        query += " WHERE status = ?"
+        params.append(status)
+    query += " ORDER BY name"
+
     conn = get_db_connection()
-    rows = conn.execute(
-        "SELECT vendor_id, name, status FROM vendors ORDER BY name"
-    ).fetchall()
+    rows = conn.execute(query, params).fetchall()
     conn.close()
 
     vendors = [dict(row) for row in rows]
@@ -155,18 +168,61 @@ def add_vendor():
 
 @app.route("/api/contracts", methods=["GET"])
 def get_contracts():
-    
-    conn = get_db_connection()
-    rows = conn.execute(
-        """
+    """
+    Day 9: optional query params, all combinable, all backward compatible
+    (no params = every contract, exactly like before):
+      ?type=License              -> exact match on contract_type
+      ?vendor_id=3               -> contracts for one vendor
+      ?status=active             -> filter by contract's app_status
+      ?vendor_status=active      -> only contracts whose VENDOR is active
+                                     (pass 'discontinued' to see only those)
+      ?q=airtel                  -> free-text search - matches vendor name,
+                                     contract type, details, PO number,
+                                     master contract note, remarks, or status,
+                                     so the user never has to say which field
+                                     they mean.
+    """
+    contract_type = request.args.get("type")
+    vendor_id = request.args.get("vendor_id")
+    app_status = request.args.get("status")
+    vendor_status = request.args.get("vendor_status")
+    search = request.args.get("q")
+
+    query = """
         SELECT c.contract_id, c.vendor_id, v.name AS vendor_name,
                c.contract_type, c.details, c.po_number, c.due_date, c.end_date,
                c.yearly_amount, c.procurement_status, c.master_contract_note, c.remarks
         FROM contracts c
         JOIN vendors v ON v.vendor_id = c.vendor_id
-        ORDER BY c.due_date IS NULL, c.due_date ASC
-        """
-    ).fetchall()
+        WHERE 1=1
+    """
+    params = []
+
+    if contract_type:
+        query += " AND c.contract_type = ?"
+        params.append(contract_type)
+    if vendor_id:
+        query += " AND c.vendor_id = ?"
+        params.append(vendor_id)
+    if app_status:
+        query += " AND c.app_status = ?"
+        params.append(app_status)
+    if vendor_status:
+        query += " AND v.status = ?"
+        params.append(vendor_status)
+    if search:
+        query += """ AND (
+            v.name LIKE ? OR c.contract_type LIKE ? OR c.details LIKE ? OR
+            c.po_number LIKE ? OR c.master_contract_note LIKE ? OR
+            c.remarks LIKE ? OR c.procurement_status LIKE ?
+        )"""
+        like_term = f"%{search}%"
+        params.extend([like_term] * 7)
+
+    query += " ORDER BY c.due_date IS NULL, c.due_date ASC"
+
+    conn = get_db_connection()
+    rows = conn.execute(query, params).fetchall()
     conn.close()
 
     contracts = []
@@ -331,6 +387,62 @@ def get_contract_history(contract_id):
     conn.close()
 
     return jsonify([dict(row) for row in rows])
+
+
+@app.route("/api/recipients", methods=["GET"])
+def get_recipients():
+    conn = get_db_connection()
+    rows = conn.execute(
+        "SELECT recipient_id, email FROM recipients ORDER BY email"
+    ).fetchall()
+    conn.close()
+    return jsonify([dict(row) for row in rows])
+
+
+@app.route("/api/recipients", methods=["POST"])
+def add_recipient():
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip()
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+        return jsonify({"error": "Please enter a valid email address"}), 400
+
+    conn = get_db_connection()
+    try:
+        cur = conn.execute("INSERT INTO recipients (email) VALUES (?)", (email,))
+        conn.commit()
+        new_id = cur.lastrowid
+    except sqlite3.IntegrityError:
+        conn.close()
+        return jsonify({"error": f"'{email}' is already a recipient"}), 409
+
+    row = conn.execute(
+        "SELECT recipient_id, email FROM recipients WHERE recipient_id = ?", (new_id,)
+    ).fetchone()
+    conn.close()
+
+    return jsonify(dict(row)), 201
+
+
+@app.route("/api/recipients/<int:recipient_id>", methods=["DELETE"])
+def delete_recipient(recipient_id):
+    conn = get_db_connection()
+
+    existing = conn.execute(
+        "SELECT recipient_id FROM recipients WHERE recipient_id = ?", (recipient_id,)
+    ).fetchone()
+    if existing is None:
+        conn.close()
+        return jsonify({"error": "Recipient not found"}), 404
+
+    conn.execute("DELETE FROM recipients WHERE recipient_id = ?", (recipient_id,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"deleted": True})
 
 
 if __name__ == "__main__":
