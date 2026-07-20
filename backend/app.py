@@ -445,5 +445,15 @@ def delete_recipient(recipient_id):
     return jsonify({"deleted": True})
 
 
+@app.route("/api/digest-preview", methods=["GET"])
+def digest_preview():
+    """Lets Person B (or anyone) see the exact digest data shape from the
+    running server, without needing to run digest.py separately. Imported
+    here rather than at the top of the file to avoid a circular import,
+    since digest.py itself imports helpers from this file."""
+    from digest import build_digest_data
+    return jsonify(build_digest_data())
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
