@@ -455,5 +455,72 @@ def digest_preview():
     return jsonify(build_digest_data())
 
 
+def _send_digest_to_all_recipients():
+    """
+    Shared by both the on-demand button and the daily scheduled job:
+    builds today's digest and emails it to every configured recipient.
+    Returns (sent_count, list_of_failure_messages).
+    """
+    from digest import build_digest_data, render_digest_email
+    from email_utils import send_email
+
+    conn = get_db_connection()
+    recipients = conn.execute("SELECT email FROM recipients").fetchall()
+    conn.close()
+
+    if not recipients:
+        return 0, ["No recipients configured yet - add one on the Recipients page first."]
+
+    html = render_digest_email(build_digest_data())
+
+    failures = []
+    sent_count = 0
+    for row in recipients:
+        success, error = send_email(row["email"], "Contract Renewal Digest", html)
+        if success:
+            sent_count += 1
+        else:
+            failures.append(f"{row['email']}: {error}")
+
+    return sent_count, failures
+
+
+@app.route("/api/send-test-email", methods=["POST"])
+def send_test_email():
+    """
+    What Person B's "Send test email now" button calls. Builds today's
+    real digest and sends it to every configured recipient right now -
+    an on-demand trigger for demos, separate from the automatic daily run.
+    """
+    sent_count, failures = _send_digest_to_all_recipients()
+
+    if sent_count == 0 and failures:
+        return jsonify({"error": failures[0]}), 400
+
+    if failures:
+        return jsonify({
+            "sent": True,
+            "recipient_count": sent_count,
+            "warning": f"{len(failures)} failed: " + "; ".join(failures),
+        })
+
+    return jsonify({"sent": True, "recipient_count": sent_count})
+
+
+def send_daily_digest_job():
+    """The actual scheduled job - same send logic as the button above,
+    just triggered automatically once a day instead of by a click."""
+    sent_count, failures = _send_digest_to_all_recipients()
+    print(f"[daily digest] sent to {sent_count} recipient(s).")
+    for failure in failures:
+        print(f"[daily digest] {failure}")
+
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    from apscheduler.schedulers.background import BackgroundScheduler
+
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(send_daily_digest_job, "cron", hour=8, minute=0)
+    scheduler.start()
+    print("Daily digest scheduler started - will run every day at 08:00.")
+    app.run(debug=True, port=5000, use_reloader=False)
