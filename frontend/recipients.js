@@ -116,3 +116,41 @@ recipientsList.addEventListener('click', async function (event) {
 });
 
 loadRecipients();
+
+// ============================================================
+// NEW: "Send test email now" button.
+// NOTE: assumes Prachi's backend exposes POST /api/send-test-email —
+// confirm the exact route name once her scheduler/SMTP work is done.
+// ============================================================
+const sendTestEmailBtn = document.getElementById('sendTestEmailBtn');
+const testEmailMessage = document.getElementById('testEmailMessage');
+
+sendTestEmailBtn.addEventListener('click', async function () {
+  testEmailMessage.textContent = 'Sending...';
+  testEmailMessage.className = 'form-message';
+  sendTestEmailBtn.disabled = true;
+
+  try {
+    const response = await fetch(`${API_BASE}/send-test-email`, {
+      method: 'POST'
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      testEmailMessage.textContent = data.error || 'Could not send test email.';
+      testEmailMessage.className = 'form-message error';
+      return;
+    }
+
+    testEmailMessage.textContent = 'Test email sent!';
+    testEmailMessage.className = 'form-message success';
+
+  } catch (error) {
+    testEmailMessage.textContent = 'Could not send test email. Is the backend running?';
+    testEmailMessage.className = 'form-message error';
+    console.error('Error sending test email:', error);
+  } finally {
+    sendTestEmailBtn.disabled = false;
+  }
+});
