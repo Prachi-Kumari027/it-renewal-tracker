@@ -43,6 +43,13 @@ CREATE TABLE IF NOT EXISTS recipients (
     created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS digest_send_log (
+    log_id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    sent_on          DATE NOT NULL UNIQUE,
+    sent_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    recipient_count  INTEGER
+);
+
 CREATE INDEX IF NOT EXISTS idx_contracts_vendor_id ON contracts(vendor_id);
 CREATE INDEX IF NOT EXISTS idx_contracts_due_date  ON contracts(due_date);
 CREATE INDEX IF NOT EXISTS idx_history_contract_id ON contract_history(contract_id);

@@ -38,7 +38,7 @@ def build_digest_data():
 
 
 def _format_date_display(iso_date):
-    
+    """Matches the frontend's DD-MM-YYYY display convention."""
     if not iso_date:
         return "N/A"
     year, month, day = iso_date.split("-")
@@ -61,11 +61,18 @@ def render_digest_email(grouped_data):
     with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
         template = f.read()
 
+    any_due = bool(
+        grouped_data["red"] or grouped_data["yellow"]
+        or grouped_data["green"] or grouped_data["gray"]
+    )
+
     context = {
         "today_date": date.today().strftime("%d-%m-%Y"),
+        "has_anything_due": any_due,
         "red_contracts": rows_for(grouped_data["red"]),
         "yellow_contracts": rows_for(grouped_data["yellow"]),
         "green_contracts": rows_for(grouped_data["green"]),
+        "gray_contracts": rows_for(grouped_data["gray"]),
     }
 
     return chevron.render(template, context)

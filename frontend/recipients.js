@@ -117,11 +117,7 @@ recipientsList.addEventListener('click', async function (event) {
 
 loadRecipients();
 
-// ============================================================
-// NEW: "Send test email now" button.
-// NOTE: assumes Prachi's backend exposes POST /api/send-test-email —
-// confirm the exact route name once her scheduler/SMTP work is done.
-// ============================================================
+
 const sendTestEmailBtn = document.getElementById('sendTestEmailBtn');
 const testEmailMessage = document.getElementById('testEmailMessage');
 
