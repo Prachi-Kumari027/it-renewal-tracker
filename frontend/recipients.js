@@ -24,13 +24,13 @@ async function loadRecipients() {
     const recipients = await response.json();
 
     if (recipients.length === 0) {
-      recipientsList.innerHTML = `<p style="font-size:13px; color:#6b7684;">No recipients added yet.</p>`;
+      recipientsList.innerHTML = `<p class="state-message">No recipients added yet.</p>`;
       return;
     }
 
     recipientsList.innerHTML = recipients.map(recipientRowHTML).join('');
   } catch (error) {
-    recipientsList.innerHTML = `<p style="font-size:13px; color:#a33d33;">Could not load recipients. Is the backend running?</p>`;
+    recipientsList.innerHTML = `<p class="state-message error">Could not load recipients. Is the backend running?</p>`;
     console.error('Error loading recipients:', error);
   }
 }
@@ -117,7 +117,11 @@ recipientsList.addEventListener('click', async function (event) {
 
 loadRecipients();
 
-
+// ============================================================
+// NEW: "Send test email now" button.
+// NOTE: assumes Prachi's backend exposes POST /api/send-test-email —
+// confirm the exact route name once her scheduler/SMTP work is done.
+// ============================================================
 const sendTestEmailBtn = document.getElementById('sendTestEmailBtn');
 const testEmailMessage = document.getElementById('testEmailMessage');
 

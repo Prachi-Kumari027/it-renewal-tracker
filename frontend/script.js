@@ -58,6 +58,7 @@ const detailFields      = document.getElementById('detailFields');
 const detailHistory     = document.getElementById('detailHistory');
 
 const contractsGrid = document.getElementById('contractsGrid');
+const summaryStrip = document.getElementById('summaryStrip');
 const showDiscontinuedToggle = document.getElementById('showDiscontinuedToggle');
 const searchInput = document.getElementById('searchInput');
 const typeFilter = document.getElementById('typeFilter');
@@ -271,10 +272,54 @@ async function loadContracts() {
 
     populateFilterOptions(allContracts);
     renderContracts(allContracts);
+    renderSummaryStrip(allContracts);
   } catch (error) {
-    contractsGrid.innerHTML = `<p style="font-size:13px; color:#a33d33;">Could not load contracts. Is the backend running?</p>`;
+    contractsGrid.innerHTML = `<p class="state-message error">Could not load contracts. Is the backend running?</p>`;
     console.error('Error loading contracts:', error);
   }
+}
+
+// Day 15: summary strip — counts contracts by color (red/yellow/green/gray),
+// plus how many vendors are discontinued. Always reflects ALL contracts,
+// not the currently filtered/toggled view, since it's meant as a fixed
+// at-a-glance overview regardless of search/filter state.
+function renderSummaryStrip(contracts) {
+  const counts = { red: 0, yellow: 0, green: 0, gray: 0 };
+  const discontinuedVendorIds = new Set();
+
+  contracts.forEach(function (c) {
+    if (c.vendor_status === 'discontinued') {
+      discontinuedVendorIds.add(c.vendor_id);
+      return;
+    }
+    const color = c.color || 'gray';
+    if (counts[color] !== undefined) {
+      counts[color]++;
+    }
+  });
+
+  summaryStrip.innerHTML = `
+    <div class="summary-item red">
+      <span class="summary-count">${counts.red}</span>
+      <span class="summary-label">Red</span>
+    </div>
+    <div class="summary-item yellow">
+      <span class="summary-count">${counts.yellow}</span>
+      <span class="summary-label">Yellow</span>
+    </div>
+    <div class="summary-item green">
+      <span class="summary-count">${counts.green}</span>
+      <span class="summary-label">Green</span>
+    </div>
+    <div class="summary-item gray">
+      <span class="summary-count">${counts.gray}</span>
+      <span class="summary-label">No due date</span>
+    </div>
+    <div class="summary-item discontinued">
+      <span class="summary-count">${discontinuedVendorIds.size}</span>
+      <span class="summary-label">Discontinued vendors</span>
+    </div>
+  `;
 }
 
 // Separated from loadContracts so the toggle/search can re-render
@@ -302,7 +347,7 @@ function renderContracts(contracts) {
   }
 
   if (visibleContracts.length === 0) {
-    contractsGrid.innerHTML = `<p style="font-size:13px; color:#6b7684;">No contracts to show.</p>`;
+    contractsGrid.innerHTML = `<p class="state-message">No contracts to show.</p>`;
     return;
   }
 
@@ -570,7 +615,7 @@ function renderHistory(historyRows) {
 async function openDetailModal(contractId) {
   detailVendorName.textContent = 'Loading...';
   detailFields.innerHTML = '';
-  detailHistory.innerHTML = `<p style="font-size:12px; color:#6b7684;">Loading history...</p>`;
+  detailHistory.innerHTML = `<p class="state-message"><span class="spinner"></span> Loading history...</p>`;
   detailOverlay.classList.add('open');
 
   try {
