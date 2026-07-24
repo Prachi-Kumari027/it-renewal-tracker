@@ -118,11 +118,7 @@ def discontinue_vendor(vendor_id):
 
 @app.route("/api/vendors", methods=["GET"])
 def get_vendors():
-    """
-    Optional query param:
-      ?status=active | discontinued  -> filter by vendor status
-    No params = everyone, same as before (nothing breaks for existing callers).
-    """
+    
     status = request.args.get("status")
 
     query = "SELECT vendor_id, name, status FROM vendors"
@@ -168,20 +164,7 @@ def add_vendor():
 
 @app.route("/api/contracts", methods=["GET"])
 def get_contracts():
-    """
-    Day 9: optional query params, all combinable, all backward compatible
-    (no params = every contract, exactly like before):
-      ?type=License              -> exact match on contract_type
-      ?vendor_id=3               -> contracts for one vendor
-      ?status=active             -> filter by contract's app_status
-      ?vendor_status=active      -> only contracts whose VENDOR is active
-                                     (pass 'discontinued' to see only those)
-      ?q=airtel                  -> free-text search - matches vendor name,
-                                     contract type, details, PO number,
-                                     master contract note, remarks, or status,
-                                     so the user never has to say which field
-                                     they mean.
-    """
+    
     contract_type = request.args.get("type")
     vendor_id = request.args.get("vendor_id")
     app_status = request.args.get("status")
@@ -525,6 +508,27 @@ def send_daily_digest_job():
         )
         conn.commit()
         conn.close()
+
+
+@app.errorhandler(404)
+def handle_not_found(error):
+    
+    return jsonify({"error": "Not found"}), 404
+
+
+@app.errorhandler(400)
+def handle_bad_request(error):
+    return jsonify({"error": "Bad request"}), 400
+
+
+@app.errorhandler(405)
+def handle_method_not_allowed(error):
+    return jsonify({"error": "That method isn't allowed on this URL"}), 405
+
+
+@app.errorhandler(500)
+def handle_server_error(error):
+    return jsonify({"error": "Something went wrong on the server"}), 500
 
 
 if __name__ == "__main__":
