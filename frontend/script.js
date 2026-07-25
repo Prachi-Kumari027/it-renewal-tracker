@@ -233,6 +233,7 @@ function contractCardHTML(contract) {
       <div class="card-field"><span class="label">Type:</span> <span class="value">${contract.contract_type || 'N/A'}</span></div>
       <div class="card-field"><span class="label">PO No:</span> <span class="value">${contract.po_number || 'N/A'}</span></div>
       <div class="card-field"><span class="label">Due:</span> <span class="value">${dueDateDisplay}</span></div>
+      <div class="card-field"><span class="label">End Date:</span> <span class="value">${formatDateDMY(contract.end_date) || 'N/A'}</span></div>
       <div class="card-field"><span class="label">Amount:</span> <span class="value">${formatAmount(contract.yearly_amount)}</span></div>
       <div class="card-field"><span class="label">Status:</span> <span class="value">${contract.procurement_status || 'N/A'}</span></div>
       <div class="card-field"><span class="label">Master Contract:</span> <span class="value">${contract.master_contract_note || 'N/A'}</span></div>
@@ -469,7 +470,7 @@ async function saveContract() {
     contract_type: selectedType,
     po_number: contractPOEl.value.trim(),
     start_date: contractStartDateEl.value || null,
-    end_date: contractEndDateEl.value || null,   // NOTE: backend doesn't store this yet
+    end_date: contractEndDateEl.value || null,
     due_date: contractDueDateEl.value || null,
     yearly_amount: contractAmountEl.value ? Number(contractAmountEl.value) : null
   };
@@ -580,6 +581,7 @@ function renderDetailFields(contract) {
     ['PO Number', contract.po_number],
     ['Start Date', formatDate(contract.start_date)],
     ['Due Date', formatDate(contract.due_date)],
+    ['End Date', formatDate(contract.end_date)],
     ['Amount', formatAmount(contract.yearly_amount)],
     ['Status', contract.procurement_status],
     ['Master Contract', contract.master_contract_note],
@@ -598,7 +600,7 @@ function renderDetailFields(contract) {
 
 function renderHistory(historyRows) {
   if (historyRows.length === 0) {
-    detailHistory.innerHTML = `<p style="font-size:12px; color:#6b7684;">No renewal history yet.</p>`;
+    detailHistory.innerHTML = `<p class="state-message">No renewal history yet.</p>`;
     return;
   }
 
@@ -635,7 +637,7 @@ async function openDetailModal(contractId) {
 
   } catch (error) {
     detailVendorName.textContent = 'Error';
-    detailFields.innerHTML = `<p style="font-size:12px; color:#a33d33;">Could not load contract details.</p>`;
+    detailFields.innerHTML = `<p class="state-message error">Could not load contract details.</p>`;
     console.error('Error loading contract detail:', error);
   }
 }
