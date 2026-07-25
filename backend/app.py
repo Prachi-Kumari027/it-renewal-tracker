@@ -384,8 +384,9 @@ def get_recipients():
 
 @app.route("/api/recipients", methods=["POST"])
 def add_recipient():
+    
     data = request.get_json(silent=True) or {}
-    email = (data.get("email") or "").strip()
+    email = (data.get("email") or "").strip().lower()
 
     if not email:
         return jsonify({"error": "Email is required"}), 400
