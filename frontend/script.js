@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://PrachiKumari.pythonanywhere.com/api';
 
 // ---------- Element references: vendor form ----------
 const openVendorFormBtn   = document.getElementById('openVendorFormBtn');
