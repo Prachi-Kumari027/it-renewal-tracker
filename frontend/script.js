@@ -363,6 +363,7 @@ function matchesSearch(contract, term) {
     contract.vendor_name,
     contract.contract_type,
     contract.po_number,
+    contract.details,
     contract.master_contract_note,
     contract.remarks,
     contract.procurement_status
@@ -579,6 +580,7 @@ function renderDetailFields(contract) {
   const rows = [
     ['Type', contract.contract_type],
     ['PO Number', contract.po_number],
+    ['Details', contract.details],
     ['Start Date', formatDate(contract.start_date)],
     ['Due Date', formatDate(contract.due_date)],
     ['End Date', formatDate(contract.end_date)],
