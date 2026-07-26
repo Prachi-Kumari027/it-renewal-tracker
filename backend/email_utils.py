@@ -5,7 +5,8 @@ from email.mime.text import MIMEText
 
 from dotenv import load_dotenv
 
-load_dotenv()
+ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+load_dotenv(ENV_PATH)
 
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
