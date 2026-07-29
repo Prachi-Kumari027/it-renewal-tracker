@@ -53,21 +53,9 @@ it-renewal-tracker/
    ```
    python create_db.py
    ```
-   Then, in DB Browser for SQLite (or any SQLite client), also run these two `CREATE TABLE` statements once, since they were added after the main schema:
-   ```sql
-   CREATE TABLE IF NOT EXISTS recipients (
-       recipient_id INTEGER PRIMARY KEY AUTOINCREMENT,
-       email        TEXT NOT NULL UNIQUE,
-       created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-   );
-
-   CREATE TABLE IF NOT EXISTS digest_send_log (
-       log_id           INTEGER PRIMARY KEY AUTOINCREMENT,
-       sent_on          DATE NOT NULL UNIQUE,
-       sent_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-       recipient_count  INTEGER
-   );
-   ```
+   This runs the full `schema.sql`, creating all tables in one go — `vendors`,
+   `contracts`, `contract_history`, `recipients`, and `digest_send_log`.
+   No manual SQL needed.
 
 5. Load vendor names and contract data from the Excel sheet (only needs doing once, or after a schema change):
    ```

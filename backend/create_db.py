@@ -18,7 +18,7 @@ def create_database():
     conn.commit()
     conn.close()
 
-    print(f"Done. Created '{DB_PATH}' with tables: vendors, contracts, contract_history")
+    print(f"Done. Created '{DB_PATH}' with tables: vendors, contracts, contract_history, recipients, digest_send_log")
 
 
 if __name__ == "__main__":
