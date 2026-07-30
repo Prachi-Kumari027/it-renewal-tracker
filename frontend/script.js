@@ -24,13 +24,12 @@ const contractDueDateEl     = document.getElementById('contractDueDate');
 const contractAmountEl      = document.getElementById('contractAmount');
 const contractFormMessage   = document.getElementById('contractFormMessage');
 
-// Show the "custom type" box only when "Other" is selected
+
 contractTypeEl.addEventListener('change', function () {
   contractTypeOtherGroup.style.display = (contractTypeEl.value === 'other') ? 'block' : 'none';
 });
 
-// PO number: strip out anything that isn't a digit, as the user types.
-// This is what makes letters "impossible" to type, not just rejected on submit.
+
 contractPOEl.addEventListener('input', function () {
   contractPOEl.value = contractPOEl.value.replace(/\D/g, '');
 });
@@ -50,12 +49,15 @@ renewNewPOEl.addEventListener('input', function () {
   renewNewPOEl.value = renewNewPOEl.value.replace(/\D/g, '');
 });
 
-// ---------- Element references: detail modal (NEW today) ----------
+// ---------- Element references: detail modal ----------
 const detailOverlay     = document.getElementById('detailModal');
 const closeDetailBtn    = document.getElementById('closeDetailBtn');
 const detailVendorName  = document.getElementById('detailVendorName');
 const detailFields      = document.getElementById('detailFields');
 const detailHistory     = document.getElementById('detailHistory');
+
+// ---------- Element references: export (NEW today) ----------
+const exportExcelBtn = document.getElementById('exportExcelBtn');
 
 const contractsGrid = document.getElementById('contractsGrid');
 const summaryStrip = document.getElementById('summaryStrip');
@@ -64,8 +66,7 @@ const searchInput = document.getElementById('searchInput');
 const typeFilter = document.getElementById('typeFilter');
 const statusFilter = document.getElementById('statusFilter');
 
-// Keeps the last-fetched contracts in memory, so toggling/searching/
-// filtering can just re-render instantly without re-fetching.
+
 let allContracts = [];
 
 showDiscontinuedToggle.addEventListener('change', function () {
@@ -84,9 +85,7 @@ statusFilter.addEventListener('change', function () {
   renderContracts(allContracts);
 });
 
-// Fills a <select> with unique values pulled straight from the actual
-// contract data — so the dropdown always matches what's really in the
-// database, instead of a hardcoded list that could go stale.
+
 function populateFilterOptions(contracts) {
   const types = [...new Set(contracts.map(c => c.contract_type).filter(Boolean))].sort();
   const statuses = [...new Set(contracts.map(c => c.procurement_status).filter(Boolean))].sort();
@@ -98,9 +97,7 @@ function populateFilterOptions(contracts) {
     statuses.map(s => `<option value="${s}">${s}</option>`).join('');
 }
 
-// ============================================================
-// Vendor form open/close (same pattern as before)
-// ============================================================
+
 openVendorFormBtn.addEventListener('click', function () {
   vendorOverlay.classList.add('open');
 });
@@ -111,11 +108,7 @@ vendorOverlay.addEventListener('click', function (event) {
   if (event.target === vendorOverlay) vendorOverlay.classList.remove('open');
 });
 
-// ============================================================
-// Contract form open/close — NEW today.
-// When opening, we first load the vendor list into the dropdown,
-// since a contract must belong to a real vendor.
-// ============================================================
+
 openContractFormBtn.addEventListener('click', async function () {
   await populateVendorDropdown();
   contractOverlay.classList.add('open');
@@ -137,8 +130,7 @@ async function populateVendorDropdown() {
       return;
     }
 
-    // Build one <option> per vendor. value = vendor_id (what the API needs),
-    // visible text = vendor name (what the user reads).
+   
     contractVendorEl.innerHTML = vendors
       .map(v => `<option value="${v.vendor_id}">${v.name}</option>`)
       .join('');
@@ -148,12 +140,7 @@ async function populateVendorDropdown() {
   }
 }
 
-// ============================================================
-// Renew form open/close — opened from a "Renew" button on a card,
-// so there's no single fixed button to attach this to up front.
-// Instead, we use "event delegation": listen on the whole grid,
-// and check if a Renew button was the thing clicked.
-// ============================================================
+
 contractsGrid.addEventListener('click', function (event) {
   if (event.target.matches('.btn.renew')) {
     const card = event.target.closest('.contract-card');
@@ -184,9 +171,7 @@ renewOverlay.addEventListener('click', function (event) {
   if (event.target === renewOverlay) renewOverlay.classList.remove('open');
 });
 
-// ============================================================
-// Detail modal open/close — NEW today.
-// ============================================================
+
 closeDetailBtn.addEventListener('click', function () {
   detailOverlay.classList.remove('open');
 });
@@ -194,14 +179,7 @@ detailOverlay.addEventListener('click', function (event) {
   if (event.target === detailOverlay) detailOverlay.classList.remove('open');
 });
 
-// ============================================================
-// Rendering contract cards — added data-* attributes so the Renew
-// button click handler above can find the right contract.
-// ============================================================
-// Converts "YYYY-MM-DD" (how dates are stored/sent) into "DD-MM-YYYY"
-// (how the mentor wants them displayed). Only affects what's SHOWN —
-// the actual <input type="date"> fields still use YYYY-MM-DD internally,
-// since that's a browser requirement, not something we can change.
+
 function formatDateDMY(dateStr) {
   if (!dateStr) return null;
   const datePart = dateStr.split(' ')[0]; // drop time if present
@@ -219,6 +197,7 @@ function contractCardHTML(contract) {
   const color = contract.color || 'gray';
   const dueDateDisplay = formatDateDMY(contract.due_date) || 'No due date';
   const isDiscontinued = contract.vendor_status === 'discontinued';
+  const daysLeftText = formatDaysLeft(contract.days_remaining);
 
   return `
     <div class="contract-card ${color} ${isDiscontinued ? 'discontinued' : ''}"
@@ -230,14 +209,12 @@ function contractCardHTML(contract) {
         <span class="card-vendor-name">${contract.vendor_name}</span>
         ${isDiscontinued ? '<span class="discontinued-badge">Discontinued</span>' : ''}
       </div>
+      <div class="card-field days-left"><span class="label">Renewal:</span> <span class="value ${color}">${daysLeftText}</span></div>
       <div class="card-field"><span class="label">Type:</span> <span class="value">${contract.contract_type || 'N/A'}</span></div>
       <div class="card-field"><span class="label">PO No:</span> <span class="value">${contract.po_number || 'N/A'}</span></div>
       <div class="card-field"><span class="label">Due:</span> <span class="value">${dueDateDisplay}</span></div>
       <div class="card-field"><span class="label">End Date:</span> <span class="value">${formatDateDMY(contract.end_date) || 'N/A'}</span></div>
-      <div class="card-field"><span class="label">Amount:</span> <span class="value">${formatAmount(contract.yearly_amount)}</span></div>
-      <div class="card-field"><span class="label">Status:</span> <span class="value">${contract.procurement_status || 'N/A'}</span></div>
       <div class="card-field"><span class="label">Master Contract:</span> <span class="value">${contract.master_contract_note || 'N/A'}</span></div>
-      <div class="card-field"><span class="label">Remarks:</span> <span class="value">${contract.remarks || 'N/A'}</span></div>
       <div class="card-actions">
         <button class="btn view">View</button>
         <button class="btn renew">Renew</button>
@@ -247,11 +224,16 @@ function contractCardHTML(contract) {
   `;
 }
 
+
+function formatDaysLeft(daysRemaining) {
+  if (daysRemaining === null || daysRemaining === undefined) return 'No due date set';
+  if (daysRemaining < 0) return `Overdue by ${Math.abs(daysRemaining)} day${Math.abs(daysRemaining) === 1 ? '' : 's'}`;
+  if (daysRemaining === 0) return 'Due today';
+  return `${daysRemaining} day${daysRemaining === 1 ? '' : 's'} left`;
+}
+
 async function loadContracts() {
   try {
-    // Fetch contracts AND vendors together — we need the vendor list to
-    // know each vendor's status (active/discontinued), since /api/contracts
-    // doesn't include that itself.
     const [contractsResponse, vendorsResponse] = await Promise.all([
       fetch(`${API_BASE}/contracts`),
       fetch(`${API_BASE}/vendors`)
@@ -264,8 +246,7 @@ async function loadContracts() {
     const vendorStatusById = {};
     vendors.forEach(v => { vendorStatusById[v.vendor_id] = v.status; });
 
-    // Attach each contract's vendor status onto the contract itself,
-    // so contractCardHTML can use it without a second lookup later.
+
     allContracts = contracts.map(c => ({
       ...c,
       vendor_status: vendorStatusById[c.vendor_id] || 'active'
@@ -280,10 +261,7 @@ async function loadContracts() {
   }
 }
 
-// Day 15: summary strip — counts contracts by color (red/yellow/green/gray),
-// plus how many vendors are discontinued. Always reflects ALL contracts,
-// not the currently filtered/toggled view, since it's meant as a fixed
-// at-a-glance overview regardless of search/filter state.
+
 function renderSummaryStrip(contracts) {
   const counts = { red: 0, yellow: 0, green: 0, gray: 0 };
   const discontinuedVendorIds = new Set();
@@ -323,8 +301,7 @@ function renderSummaryStrip(contracts) {
   `;
 }
 
-// Separated from loadContracts so the toggle/search can re-render
-// instantly from the already-fetched data, without hitting the API again.
+
 function renderContracts(contracts) {
   const showDiscontinued = showDiscontinuedToggle.checked;
   const searchTerm = searchInput.value.trim().toLowerCase();
@@ -355,9 +332,7 @@ function renderContracts(contracts) {
   contractsGrid.innerHTML = visibleContracts.map(contractCardHTML).join('');
 }
 
-// Checks a single contract against the search term across several
-// fields at once — the user just types, they don't pick which field.
-// String(...) handles fields that might be numbers (like po_number).
+
 function matchesSearch(contract, term) {
   const searchableFields = [
     contract.vendor_name,
@@ -374,12 +349,9 @@ function matchesSearch(contract, term) {
   );
 }
 
-// ============================================================
-// NEW: Discontinue a vendor (PUT /api/vendors/<id>/discontinue)
-// ============================================================
+
 async function discontinueVendor(vendorId, vendorName) {
-  // A native browser confirm() dialog — simple, but does exactly what's
-  // needed: pause and make sure this wasn't an accidental click.
+
   const confirmed = window.confirm(
     `Are you sure you want to discontinue "${vendorName}"? This won't delete anything — it just marks the vendor as discontinued.`
   );
@@ -405,9 +377,7 @@ async function discontinueVendor(vendorId, vendorName) {
   }
 }
 
-// ============================================================
-// Save a new vendor (unchanged)
-// ============================================================
+
 async function saveVendor() {
   const name = vendorNameEl.value.trim();
 
@@ -449,9 +419,7 @@ async function saveVendor() {
 }
 saveVendorBtn.addEventListener('click', saveVendor);
 
-// ============================================================
-// NEW: Save a new contract (POST /api/contracts)
-// ============================================================
+
 async function saveContract() {
   const vendorId = contractVendorEl.value;
 
@@ -518,9 +486,7 @@ async function saveContract() {
 }
 saveContractBtn.addEventListener('click', saveContract);
 
-// ============================================================
-// NEW: Save a renewal (PUT /api/contracts/<id>)
-// ============================================================
+
 async function saveRenewal() {
   const contractId = renewContractIdEl.value;
   const newPO = renewNewPOEl.value.trim();
@@ -564,14 +530,7 @@ async function saveRenewal() {
 }
 saveRenewBtn.addEventListener('click', saveRenewal);
 
-// ============================================================
-// NEW: Contract detail modal — fetches full contract info AND
-// its renewal history, then fills in the modal with both.
-// ============================================================
 
-// (formatDateDMY, defined above near contractCardHTML, is used for all
-// date display now — this old formatDate is kept only as a safe fallback
-// name in case it's referenced elsewhere, but points to the same logic.)
 function formatDate(value) {
   return formatDateDMY(value) || 'N/A';
 }
@@ -623,8 +582,7 @@ async function openDetailModal(contractId) {
   detailOverlay.classList.add('open');
 
   try {
-    // Fetch both the contract details and its history at the same time,
-    // instead of one after another — Promise.all runs them in parallel.
+   
     const [contractResponse, historyResponse] = await Promise.all([
       fetch(`${API_BASE}/contracts/${contractId}`),
       fetch(`${API_BASE}/contracts/${contractId}/history`)
@@ -644,7 +602,64 @@ async function openDetailModal(contractId) {
   }
 }
 
-// ============================================================
-// Run this once when the page first loads
-// ============================================================
+
+function exportContractsToExcel() {
+  if (typeof XLSX === 'undefined') {
+    alert('Export library failed to load. Check your internet connection and try again.');
+    return;
+  }
+
+  if (allContracts.length === 0) {
+    alert('There are no contracts to export yet.');
+    return;
+  }
+
+  const rows = allContracts.map(function (c) {
+    return {
+      'Vendor': c.vendor_name,
+      'Vendor Status': c.vendor_status || 'active',
+      'Type': c.contract_type || '',
+      'PO Number': c.po_number || '',
+      'Start Date': formatDateDMY(c.start_date) || '',
+      'Due Date': formatDateDMY(c.due_date) || '',
+      'End Date': formatDateDMY(c.end_date) || '',
+      'Days Remaining': (c.days_remaining === null || c.days_remaining === undefined) ? '' : c.days_remaining,
+      'Yearly Amount': (c.yearly_amount === null || c.yearly_amount === undefined) ? '' : c.yearly_amount,
+      'Procurement Status': c.procurement_status || '',
+      'Master Contract': c.master_contract_note || '',
+      'Remarks': c.remarks || '',
+      'Details': c.details || ''
+    };
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+
+ 
+  worksheet['!cols'] = [
+    { wch: 24 }, // Vendor
+    { wch: 12 }, // Vendor Status
+    { wch: 20 }, // Type
+    { wch: 14 }, // PO Number
+    { wch: 12 }, // Start Date
+    { wch: 12 }, // Due Date
+    { wch: 12 }, // End Date
+    { wch: 14 }, // Days Remaining
+    { wch: 14 }, // Yearly Amount
+    { wch: 16 }, // Procurement Status
+    { wch: 24 }, // Master Contract
+    { wch: 24 }, // Remarks
+    { wch: 24 }  // Details
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Contracts');
+
+
+  const today = new Date();
+  const stamp = today.toISOString().slice(0, 10); // YYYY-MM-DD
+  XLSX.writeFile(workbook, `vendor-contracts-${stamp}.xlsx`);
+}
+exportExcelBtn.addEventListener('click', exportContractsToExcel);
+
+
 loadContracts();

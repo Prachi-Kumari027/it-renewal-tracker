@@ -4,11 +4,14 @@ body {
   background: #eef1f5;
   color: #1c2530;
   margin: 0;
-  padding: 32px;
+  padding: 32px 0;
 }
 .page {
-  max-width: 900px;
+  width: 100dvw;
+  max-width: 1600px;
   margin: 0 auto;
+  padding: 0 32px;
+  box-sizing: border-box;
 }
 .page-title {
   font-size: 22px;
@@ -102,10 +105,10 @@ body {
 .summary-item.gray        { background: rgba(169, 177, 186, 0.14); border-left-color: #a9b1ba; }
 .summary-item.discontinued{ background: #f7f8fa; border-left-color: #8a94a1; }
 
-/* ---------- NEW today: the card grid ---------- */
+/* ---------- The card grid ---------- */
 .contracts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 14px;
 }
 
@@ -133,6 +136,11 @@ body {
 }
 .card-field .label { color: #6b7684; }
 .card-field .value { color: #1c2530; font-weight: 500; }
+.card-field.days-left .value { font-weight: 700; font-size: 13px; }
+.card-field.days-left .value.red    { color: #c0392b; }
+.card-field.days-left .value.yellow { color: #a3810a; }
+.card-field.days-left .value.green  { color: #1e7e46; }
+.card-field.days-left .value.gray   { color: #6b7684; }
 .card-actions {
   display: flex;
   gap: 6px;
@@ -324,6 +332,12 @@ body {
   margin-top: 4px;
 }
 
+/* ---------- NEW today: group of buttons in the page header ---------- */
+.page-title-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .add-recipient-row {
   display: flex;
   gap: 8px;
@@ -381,7 +395,8 @@ body {
 
 /* ---------- Day 16: responsive check ---------- */
 @media (max-width: 640px) {
-  body { padding: 16px; }
+  body { padding: 16px 0; }
+  .page { padding: 0 16px; }
 
   .page-title-row {
     flex-direction: column;
@@ -389,6 +404,7 @@ body {
     gap: 10px;
   }
   .page-title-row .btn { text-align: center; }
+  .page-title-actions { flex-direction: column; }
 
   .card { padding: 14px; }
 

@@ -10,7 +10,10 @@
 <div class="page">
   <div class="page-title-row">
     <div class="page-title">Vendor & Contract Dashboard</div>
-    <a href="recipients.html" class="btn">Manage email recipients</a>
+    <div class="page-title-actions">
+      <button class="btn" id="exportExcelBtn">Export to Excel</button>
+      <a href="recipients.html" class="btn">Manage email recipients</a>
+    </div>
   </div>
 
   <div class="card">
@@ -36,9 +39,9 @@
     </div>
 
     <div class="legend">
-      <span><span class="dot red"></span> Red — 10 days or fewer left</span>
-      <span><span class="dot yellow"></span> Yellow — 11-20 days left</span>
-      <span><span class="dot green"></span> Green — 21-30+ days left</span>
+      <span><span class="dot red"></span> 10 days or fewer left</span>
+      <span><span class="dot yellow"></span> 11-20 days left</span>
+      <span><span class="dot green"></span> 21+ days left</span>
       <label class="toggle-label">
         <input type="checkbox" id="showDiscontinuedToggle">
         Show discontinued vendors
@@ -183,6 +186,7 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
